@@ -1,0 +1,156 @@
+APEX_CONTEXT_REPORT_V1
+STATUS=PASS
+INPUT_SHA256=0a9926f0e301a6b1b7fcdad0c5b0602a904b2dcbc4876860685665feee868d7e
+LABEL=MARKET_IMPLIED_CONTEXT_ONLY
+
+[BLOCKED_REASONS]
+NONE
+
+[INPUT_TRUTH]
+ANALYSIS_READY=NO
+CLEAN_CORE_READY=NO
+COMPETITION=Liga Europy
+COMPLETENESS_SCORE=100.0
+FULL_USABLE_READY=NO
+KICKOFF=21:00
+MARKET_COUNT=104
+MATCH=Benfica - Heart of Midlothian
+ODDS_COUNT=436
+PARSER_TRUTH_STATUS=PARTIAL
+UNRESOLVED_COUNT=0
+context_core_status=PASS_WITH_QUARANTINE
+normalized_input_sha256=0a9926f0e301a6b1b7fcdad0c5b0602a904b2dcbc4876860685665feee868d7e
+
+[MARKET_SCRIPT]
+HOME=Benfica
+AWAY=Heart of Midlothian
+FAIR_1X2={"AWAY": 0.033476, "DRAW": 0.085639, "HOME": 0.880885}
+DRAW_GRAVITY=LOW
+FAVORITE_STRENGTH=STRONG
+LAMBDA_HOME=None
+LAMBDA_AWAY=0.616605
+LAMBDA_TOTAL=4.070523
+GOAL_ENVIRONMENT=VERY_HIGH
+CENTRAL_SCORES=
+SOURCES=["1X2|Wynik meczu (z wyłączeniem dogrywki)|FULL_TIME|||||WIN_LOSE", "GOALS_OU|Gole Powyżej/Poniżej|FULL_TIME||2.5|||NO_PUSH", "TEAM_TOTALS_AWAY|Liczba goli - Heart of Midlothian|FULL_TIME|Heart of Midlothian|0.5|||NO_PUSH"]
+LIMITATIONS=["TEAM_TOTAL_0_5_PAIR_REQUIRED_FOR_TEAM_LAMBDAS"]
+
+[OFFENSE_MAP]
+{"label": "MARKET_CONTEXT_ONLY", "metrics": {"AWAY_TT_OVER_0_5": {"label": "MARKET_BALANCED", "probability": 0.460226}, "AWAY_TT_OVER_1_5": {"label": "MARKET_LONG", "probability": 0.127399}, "BTTS_YES": {"label": "MARKET_BALANCED", "probability": 0.443943892288}, "HOME_TT_OVER_0_5": {"label": "INSUFFICIENT_DATA", "probability": null}, "HOME_TT_OVER_1_5": {"label": "INSUFFICIENT_DATA", "probability": null}, "HOME_TT_OVER_2_5": {"label": "INSUFFICIENT_DATA", "probability": null}, "MATCH_OVER_1_5": {"label": "MARKET_SHORT", "probability": 0.913454}, "MATCH_OVER_2_5": {"label": "MARKET_SHORT", "probability": 0.772049}}, "period_offense": {"1ST_HALF": {"label": "MARKET_SHORT", "probability": 0.864941460938, "source": "GOALS_OU|Gole 1. połowa|1ST_HALF||0.5|||NO_PUSH"}, "2ND_HALF": {"label": "MARKET_SHORT", "probability": 0.909398969324, "source": "GOALS_OU|Gole 2. połowa|2ND_HALF||0.5|||NO_PUSH"}}, "primary_scoring_owner": null, "status": "READY"}
+
+[LINE_DISCIPLINE]
+{"cross_market_warnings": ["TEAM_TOTAL_CAN_WIN_WHILE_HIGH_HANDICAP_LOSES", "MATCH_OVER_CAN_WIN_WHILE_BTTS_YES_LOSES", "BTTS_YES_CAN_WIN_WHILE_HIGHER_TOTAL_LOSES", "OFFENSIVE_CONTEXT_DOES_NOT_IMPLY_FAVORITE_WIN"], "natural_score_scenarios": [{"effects": ["MATCH_O0_5_WIN", "MATCH_O1_5_LOSE", "HOME_TT_O0_5_WIN", "HIGH_HOME_HANDICAP_MAY_LOSE", "BTTS_YES_LOSE"], "score": "1:0"}, {"effects": ["MATCH_O1_5_WIN", "MATCH_O2_5_LOSE", "HOME_TT_O1_5_WIN", "BTTS_YES_LOSE"], "score": "2:0"}, {"effects": ["MATCH_O2_5_WIN", "MATCH_O3_5_LOSE", "BTTS_YES_WIN", "HIGH_HANDICAP_MAY_LOSE"], "score": "2:1"}, {"effects": ["MATCH_O1_5_WIN", "MATCH_O2_5_LOSE", "BTTS_YES_WIN", "FAVORITE_WIN_LOSE"], "score": "1:1"}], "status": "READY", "transitions": [{"from": "O0.5", "lower_wins_higher_loses": ["1:0", "0:1"], "to": "O1.5"}, {"from": "O1.5", "lower_wins_higher_loses": ["1:1", "2:0", "0:2"], "to": "O2.5"}, {"from": "O2.5", "lower_wins_higher_loses": ["2:1", "1:2", "3:0", "0:3"], "to": "O3.5"}], "warnings": ["HIGHER_LINE_REQUIRES_ADDITIONAL_GOAL;CONTEXT_ONLY"]}
+
+[EQUIVALENCE_AUDIT]
+{"accepted_groups": [{"declared_signature": "Benfica|Heart of Midlothian|1ST_HALF|RESULT:AWAY", "matched_records": 2, "result": "ACCEPTED", "semantic_signatures": ["1ST_HALF|1X2|wynik meczu|Heart of Midlothian|AWAY||||WIN_LOSE|ANYTIME"], "source_index": 0}, {"declared_signature": "Benfica|Heart of Midlothian|1ST_HALF|RESULT:DRAW", "matched_records": 2, "result": "ACCEPTED", "semantic_signatures": ["1ST_HALF|1X2|wynik meczu||DRAW||||WIN_LOSE|ANYTIME"], "source_index": 1}, {"declared_signature": "Benfica|Heart of Midlothian|2ND_HALF|RESULT:AWAY", "matched_records": 2, "result": "ACCEPTED", "semantic_signatures": ["2ND_HALF|1X2|wynik meczu|Heart of Midlothian|AWAY||||WIN_LOSE|TWO_OR_MORE_GOALS"], "source_index": 3}, {"declared_signature": "Benfica|Heart of Midlothian|2ND_HALF|RESULT:DRAW", "matched_records": 2, "result": "ACCEPTED", "semantic_signatures": ["2ND_HALF|1X2|wynik meczu||DRAW||||WIN_LOSE|TWO_OR_MORE_GOALS"], "source_index": 4}, {"declared_signature": "Benfica|Heart of Midlothian|FULL_TIME|RESULT:AWAY", "matched_records": 2, "result": "ACCEPTED", "semantic_signatures": ["FULL_TIME|1X2|wynik meczu (z wyłączeniem dogrywki)|Heart of Midlothian|AWAY||||WIN_LOSE|ANYTIME"], "source_index": 7}, {"declared_signature": "Benfica|Heart of Midlothian|FULL_TIME|RESULT:DRAW", "matched_records": 2, "result": "ACCEPTED", "semantic_signatures": ["FULL_TIME|1X2|wynik meczu (z wyłączeniem dogrywki)||DRAW||||WIN_LOSE|ANYTIME"], "source_index": 8}, {"declared_signature": "Benfica|Heart of Midlothian|FULL_TIME|RESULT:HOME", "matched_records": 2, "result": "ACCEPTED", "semantic_signatures": ["FULL_TIME|1X2|wynik meczu (z wyłączeniem dogrywki)|Benfica|HOME||||WIN_LOSE|ANYTIME"], "source_index": 9}], "declared_groups_checked": 10, "independent_alert_count": 16, "rejected_groups": [{"declared_signature": "Benfica|Heart of Midlothian|1ST_HALF|RESULT:HOME", "matched_records": 3, "result": "REJECTED_UNPROVEN_OR_MIXED_SEMANTICS", "semantic_signatures": ["1ST_HALF|1X2|wynik meczu|Benfica|HOME||||WIN_LOSE|ANYTIME", "1ST_HALF|HANDICAP_EUROPEAN|handicap (2-drożny) - 1. połowa||HOME|-0.5|TWO_WAY|TWO_WAY_NO_DRAW|NO_PUSH|ANYTIME"], "source_index": 2}, {"declared_signature": "Benfica|Heart of Midlothian|2ND_HALF|RESULT:HOME", "matched_records": 3, "result": "REJECTED_UNPROVEN_OR_MIXED_SEMANTICS", "semantic_signatures": ["2ND_HALF|1X2|wynik meczu|Benfica|HOME||||WIN_LOSE|TWO_OR_MORE_GOALS", "2ND_HALF|HANDICAP_EUROPEAN|handicap (2-drożny) - 2. połowa||HOME|-0.5|TWO_WAY|TWO_WAY_NO_DRAW|NO_PUSH|TWO_OR_MORE_GOALS"], "source_index": 5}, {"declared_signature": "Benfica|Heart of Midlothian|FULL_TIME|NOT_BTTS_AND_UNDER:2.5", "matched_records": 3, "result": "REJECTED_UNPROVEN_OR_MIXED_SEMANTICS", "semantic_signatures": ["FULL_TIME|COMPOUND_LOGIC|oba zespoły strzelą gola / liczba bramek||NIE_I_PONIZEJ_2,5||||WIN_LOSE|ANYTIME", "FULL_TIME|COMPOUND_LOGIC|oba zespoły strzelą gola lub powyżej 2,5 gola w meczu||NIE||||WIN_LOSE|TWO_OR_MORE_GOALS"], "source_index": 6}], "status": "PASS_WITH_REJECTIONS"}
+
+[BEST_PRICE_ALERTS]
+{"best": {"category": "Wynik", "market": "Podwójna szansa", "odds": 2.97}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "1ST_HALF|DOUBLE_CHANCE|podwójna szansa||HEART OF MIDLOTHIAN||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Wynik", "gain_percent": 153.846154, "market": "Podwójna szansa", "odds": 1.17}]}
+{"best": {"category": "Wynik", "market": "Podwójna szansa", "odds": 3.3}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "2ND_HALF|DOUBLE_CHANCE|podwójna szansa||HEART OF MIDLOTHIAN||||WIN_LOSE|TWO_OR_MORE_GOALS", "worse_copies": [{"category": "Wynik", "gain_percent": 192.035398, "market": "Podwójna szansa", "odds": 1.13}]}
+{"best": {"category": "Top", "market": "Podwójna Szansa", "odds": 6.6}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|DOUBLE_CHANCE|podwójna szansa||HEART OF MIDLOTHIAN||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Top", "gain_percent": 534.615385, "market": "Podwójna Szansa", "odds": 1.04}, {"category": "Wynik", "gain_percent": 534.615385, "market": "Podwójna szansa", "odds": 1.04}]}
+{"best": {"category": "Wynik", "market": "Wynik i kto zdobędzie 1. bramkę", "odds": 20.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|FIRST_GOAL_TEAM|wynik i kto zdobędzie 1. bramkę|Benfica|HOME||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Wynik", "gain_percent": 185.714286, "market": "Wynik i kto zdobędzie 1. bramkę", "odds": 7.0}, {"category": "Wynik", "gain_percent": 1624.137931, "market": "Wynik i kto zdobędzie 1. bramkę", "odds": 1.16}]}
+{"best": {"category": "Strzelcy", "market": "Strzelcy", "odds": 43.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelcy||CLÁUDIO BRAGA||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 30.30303, "market": "Strzelcy", "odds": 33.0}, {"category": "Strzelcy", "gain_percent": 454.83871, "market": "Strzelcy", "odds": 7.75}]}
+{"best": {"category": "Strzelcy", "market": "Strzelcy", "odds": 43.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelcy||ELTON KABANGU||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 30.30303, "market": "Strzelcy", "odds": 33.0}, {"category": "Strzelcy", "gain_percent": 437.5, "market": "Strzelcy", "odds": 8.0}]}
+{"best": {"category": "Strzelcy", "market": "Strzelcy", "odds": 60.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelcy||FRANJO IVANOVIC||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 25.0, "market": "Strzelcy", "odds": 48.0}, {"category": "Strzelcy", "gain_percent": 3233.333333, "market": "Strzelcy", "odds": 1.8}]}
+{"best": {"category": "Strzelcy", "market": "Strzelcy", "odds": 65.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelcy||JHON DURAN||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 30.0, "market": "Strzelcy", "odds": 50.0}, {"category": "Strzelcy", "gain_percent": 3339.153439, "market": "Strzelcy", "odds": 1.89}]}
+{"best": {"category": "Strzelcy", "market": "Strzelcy", "odds": 43.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelcy||ROGERS MATO||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 30.30303, "market": "Strzelcy", "odds": 33.0}, {"category": "Strzelcy", "gain_percent": 454.83871, "market": "Strzelcy", "odds": 7.75}]}
+{"best": {"category": "Strzelcy", "market": "Strzelcy", "odds": 43.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelcy||VANGELIS PAVLIDIS||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 22.857143, "market": "Strzelcy", "odds": 35.0}, {"category": "Strzelcy", "gain_percent": 3133.082707, "market": "Strzelcy", "odds": 1.33}]}
+{"best": {"category": "Strzelcy", "market": "Strzelec", "odds": 150.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelec||CLÁUDIO BRAGA||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 114.285714, "market": "Strzelec", "odds": 70.0}]}
+{"best": {"category": "Strzelcy", "market": "Strzelec", "odds": 150.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelec||ELTON KABANGU||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 100.0, "market": "Strzelec", "odds": 75.0}]}
+{"best": {"category": "Strzelcy", "market": "Strzelec", "odds": 35.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelec||FRANJO IVANOVIC||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 483.333333, "market": "Strzelec", "odds": 6.0}]}
+{"best": {"category": "Strzelcy", "market": "Strzelec", "odds": 43.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelec||JHON DURAN||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 551.515152, "market": "Strzelec", "odds": 6.6}]}
+{"best": {"category": "Strzelcy", "market": "Strzelec", "odds": 150.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelec||ROGERS MATO||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 114.285714, "market": "Strzelec", "odds": 70.0}]}
+{"best": {"category": "Strzelcy", "market": "Strzelec", "odds": 10.75}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelec||VANGELIS PAVLIDIS||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 228.746177, "market": "Strzelec", "odds": 3.27}]}
+
+[ANOMALIES]
+{"evidence": {"declared_signature": "Benfica|Heart of Midlothian|1ST_HALF|RESULT:HOME", "matched_records": 3, "result": "REJECTED_UNPROVEN_OR_MIXED_SEMANTICS", "semantic_signatures": ["1ST_HALF|1X2|wynik meczu|Benfica|HOME||||WIN_LOSE|ANYTIME", "1ST_HALF|HANDICAP_EUROPEAN|handicap (2-drożny) - 1. połowa||HOME|-0.5|TWO_WAY|TWO_WAY_NO_DRAW|NO_PUSH|ANYTIME"], "source_index": 2}, "severity": "HIGH", "type": "EQUIVALENCE_GROUP_REJECTED"}
+{"evidence": {"declared_signature": "Benfica|Heart of Midlothian|2ND_HALF|RESULT:HOME", "matched_records": 3, "result": "REJECTED_UNPROVEN_OR_MIXED_SEMANTICS", "semantic_signatures": ["2ND_HALF|1X2|wynik meczu|Benfica|HOME||||WIN_LOSE|TWO_OR_MORE_GOALS", "2ND_HALF|HANDICAP_EUROPEAN|handicap (2-drożny) - 2. połowa||HOME|-0.5|TWO_WAY|TWO_WAY_NO_DRAW|NO_PUSH|TWO_OR_MORE_GOALS"], "source_index": 5}, "severity": "HIGH", "type": "EQUIVALENCE_GROUP_REJECTED"}
+{"evidence": {"declared_signature": "Benfica|Heart of Midlothian|FULL_TIME|NOT_BTTS_AND_UNDER:2.5", "matched_records": 3, "result": "REJECTED_UNPROVEN_OR_MIXED_SEMANTICS", "semantic_signatures": ["FULL_TIME|COMPOUND_LOGIC|oba zespoły strzelą gola / liczba bramek||NIE_I_PONIZEJ_2,5||||WIN_LOSE|ANYTIME", "FULL_TIME|COMPOUND_LOGIC|oba zespoły strzelą gola lub powyżej 2,5 gola w meczu||NIE||||WIN_LOSE|TWO_OR_MORE_GOALS"], "source_index": 6}, "severity": "HIGH", "type": "EQUIVALENCE_GROUP_REJECTED"}
+{"evidence": {"best": {"category": "Wynik", "market": "Podwójna szansa", "odds": 2.97}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "1ST_HALF|DOUBLE_CHANCE|podwójna szansa||HEART OF MIDLOTHIAN||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Wynik", "gain_percent": 153.846154, "market": "Podwójna szansa", "odds": 1.17}]}, "severity": "MEDIUM", "type": "IDENTICAL_SETTLEMENT_BETTER_PRICE"}
+{"evidence": {"best": {"category": "Wynik", "market": "Podwójna szansa", "odds": 3.3}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "2ND_HALF|DOUBLE_CHANCE|podwójna szansa||HEART OF MIDLOTHIAN||||WIN_LOSE|TWO_OR_MORE_GOALS", "worse_copies": [{"category": "Wynik", "gain_percent": 192.035398, "market": "Podwójna szansa", "odds": 1.13}]}, "severity": "MEDIUM", "type": "IDENTICAL_SETTLEMENT_BETTER_PRICE"}
+{"evidence": {"best": {"category": "Top", "market": "Podwójna Szansa", "odds": 6.6}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|DOUBLE_CHANCE|podwójna szansa||HEART OF MIDLOTHIAN||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Top", "gain_percent": 534.615385, "market": "Podwójna Szansa", "odds": 1.04}, {"category": "Wynik", "gain_percent": 534.615385, "market": "Podwójna szansa", "odds": 1.04}]}, "severity": "MEDIUM", "type": "IDENTICAL_SETTLEMENT_BETTER_PRICE"}
+{"evidence": {"best": {"category": "Wynik", "market": "Wynik i kto zdobędzie 1. bramkę", "odds": 20.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|FIRST_GOAL_TEAM|wynik i kto zdobędzie 1. bramkę|Benfica|HOME||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Wynik", "gain_percent": 185.714286, "market": "Wynik i kto zdobędzie 1. bramkę", "odds": 7.0}, {"category": "Wynik", "gain_percent": 1624.137931, "market": "Wynik i kto zdobędzie 1. bramkę", "odds": 1.16}]}, "severity": "MEDIUM", "type": "IDENTICAL_SETTLEMENT_BETTER_PRICE"}
+{"evidence": {"best": {"category": "Strzelcy", "market": "Strzelcy", "odds": 43.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelcy||CLÁUDIO BRAGA||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 30.30303, "market": "Strzelcy", "odds": 33.0}, {"category": "Strzelcy", "gain_percent": 454.83871, "market": "Strzelcy", "odds": 7.75}]}, "severity": "MEDIUM", "type": "IDENTICAL_SETTLEMENT_BETTER_PRICE"}
+{"evidence": {"best": {"category": "Strzelcy", "market": "Strzelcy", "odds": 43.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelcy||ELTON KABANGU||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 30.30303, "market": "Strzelcy", "odds": 33.0}, {"category": "Strzelcy", "gain_percent": 437.5, "market": "Strzelcy", "odds": 8.0}]}, "severity": "MEDIUM", "type": "IDENTICAL_SETTLEMENT_BETTER_PRICE"}
+{"evidence": {"best": {"category": "Strzelcy", "market": "Strzelcy", "odds": 60.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelcy||FRANJO IVANOVIC||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 25.0, "market": "Strzelcy", "odds": 48.0}, {"category": "Strzelcy", "gain_percent": 3233.333333, "market": "Strzelcy", "odds": 1.8}]}, "severity": "MEDIUM", "type": "IDENTICAL_SETTLEMENT_BETTER_PRICE"}
+{"evidence": {"best": {"category": "Strzelcy", "market": "Strzelcy", "odds": 65.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelcy||JHON DURAN||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 30.0, "market": "Strzelcy", "odds": 50.0}, {"category": "Strzelcy", "gain_percent": 3339.153439, "market": "Strzelcy", "odds": 1.89}]}, "severity": "MEDIUM", "type": "IDENTICAL_SETTLEMENT_BETTER_PRICE"}
+{"evidence": {"best": {"category": "Strzelcy", "market": "Strzelcy", "odds": 43.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelcy||ROGERS MATO||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 30.30303, "market": "Strzelcy", "odds": 33.0}, {"category": "Strzelcy", "gain_percent": 454.83871, "market": "Strzelcy", "odds": 7.75}]}, "severity": "MEDIUM", "type": "IDENTICAL_SETTLEMENT_BETTER_PRICE"}
+{"evidence": {"best": {"category": "Strzelcy", "market": "Strzelcy", "odds": 43.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelcy||VANGELIS PAVLIDIS||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 22.857143, "market": "Strzelcy", "odds": 35.0}, {"category": "Strzelcy", "gain_percent": 3133.082707, "market": "Strzelcy", "odds": 1.33}]}, "severity": "MEDIUM", "type": "IDENTICAL_SETTLEMENT_BETTER_PRICE"}
+{"evidence": {"best": {"category": "Strzelcy", "market": "Strzelec", "odds": 150.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelec||CLÁUDIO BRAGA||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 114.285714, "market": "Strzelec", "odds": 70.0}]}, "severity": "MEDIUM", "type": "IDENTICAL_SETTLEMENT_BETTER_PRICE"}
+{"evidence": {"best": {"category": "Strzelcy", "market": "Strzelec", "odds": 150.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelec||ELTON KABANGU||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 100.0, "market": "Strzelec", "odds": 75.0}]}, "severity": "MEDIUM", "type": "IDENTICAL_SETTLEMENT_BETTER_PRICE"}
+{"evidence": {"best": {"category": "Strzelcy", "market": "Strzelec", "odds": 35.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelec||FRANJO IVANOVIC||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 483.333333, "market": "Strzelec", "odds": 6.0}]}, "severity": "MEDIUM", "type": "IDENTICAL_SETTLEMENT_BETTER_PRICE"}
+{"evidence": {"best": {"category": "Strzelcy", "market": "Strzelec", "odds": 43.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelec||JHON DURAN||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 551.515152, "market": "Strzelec", "odds": 6.6}]}, "severity": "MEDIUM", "type": "IDENTICAL_SETTLEMENT_BETTER_PRICE"}
+{"evidence": {"best": {"category": "Strzelcy", "market": "Strzelec", "odds": 150.0}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelec||ROGERS MATO||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 114.285714, "market": "Strzelec", "odds": 70.0}]}, "severity": "MEDIUM", "type": "IDENTICAL_SETTLEMENT_BETTER_PRICE"}
+{"evidence": {"best": {"category": "Strzelcy", "market": "Strzelec", "odds": 10.75}, "safety": "PASS_EXACT_SEMANTIC_IDENTITY", "signature": "FULL_TIME|GOALSCORER|strzelec||VANGELIS PAVLIDIS||||WIN_LOSE|ANYTIME", "worse_copies": [{"category": "Strzelcy", "gain_percent": 228.746177, "market": "Strzelec", "odds": 3.27}]}, "severity": "MEDIUM", "type": "IDENTICAL_SETTLEMENT_BETTER_PRICE"}
+{"evidence": {"reason": "INCOMPLETE_MARKET:BTTS:1ST_HALF:Wynik/oba zespoły strzelą - 1. połowa:BENFICA / NIE,BENFICA / TAK,REMIS / TAK"}, "severity": "HIGH", "type": "MISSING_REQUIRED_MARKET_PAIR"}
+{"evidence": {"reason": "INCOMPLETE_MARKET:BTTS:2ND_HALF:Wynik/oba zespoły strzelą - 2. połowa:BENFICA / NIE,BENFICA / TAK,REMIS / TAK"}, "severity": "HIGH", "type": "MISSING_REQUIRED_MARKET_PAIR"}
+{"evidence": {"reason": "INCOMPLETE_MARKET:BTTS:FULL_TIME:Oba zespoły strzelą w 1. i 2. połowie:NIE / NIE,NIE / TAK,TAK / NIE,TAK / TAK"}, "severity": "HIGH", "type": "MISSING_REQUIRED_MARKET_PAIR"}
+{"evidence": {"reason": "INCOMPLETE_MARKET:BTTS:FULL_TIME:Oba zespoły strzelą z rzutu karnego:TAK"}, "severity": "HIGH", "type": "MISSING_REQUIRED_MARKET_PAIR"}
+{"evidence": {"reason": "INCOMPLETE_MARKET:BTTS:FULL_TIME:Wynik meczu & oba zespoły strzelą:BENFICA / NIE,BENFICA / TAK,REMIS / TAK"}, "severity": "HIGH", "type": "MISSING_REQUIRED_MARKET_PAIR"}
+{"evidence": {"reason": "INCOMPLETE_MARKET:GOALS_OU:FULL_TIME:Obie połowy poniżej 1,5 goli:NIE,TAK"}, "severity": "HIGH", "type": "MISSING_REQUIRED_MARKET_PAIR"}
+{"evidence": {"reason": "INCOMPLETE_MARKET:GOALS_OU:FULL_TIME:Obie połowy powyżej 0,5 gola:NIE,TAK"}, "severity": "HIGH", "type": "MISSING_REQUIRED_MARKET_PAIR"}
+{"evidence": {"reason": "INCOMPLETE_MARKET:GOALS_OU:FULL_TIME:Obie połowy powyżej 1,5 goli:NIE,TAK"}, "severity": "HIGH", "type": "MISSING_REQUIRED_MARKET_PAIR"}
+{"evidence": {"handicap_line": "6", "handicap_probability": 0.026603923375, "result_probability": 0.880884611315, "side": "HOME", "sources": ["1X2|Wynik meczu (z wyłączeniem dogrywki)|FULL_TIME|||||WIN_LOSE", "HANDICAP_EUROPEAN|Handicap|FULL_TIME||6|THREE_WAY|EUROPEAN_THREE_WAY_WITH_DRAW|WIN_DRAW_LOSE"]}, "severity": "MEDIUM", "type": "RESULT_VS_HANDICAP_TENSION"}
+{"evidence": {"handicap_line": "5", "handicap_probability": 0.075597025278, "result_probability": 0.880884611315, "side": "HOME", "sources": ["1X2|Wynik meczu (z wyłączeniem dogrywki)|FULL_TIME|||||WIN_LOSE", "HANDICAP_EUROPEAN|Handicap|FULL_TIME||5|THREE_WAY|EUROPEAN_THREE_WAY_WITH_DRAW|WIN_DRAW_LOSE"]}, "severity": "MEDIUM", "type": "RESULT_VS_HANDICAP_TENSION"}
+{"evidence": {"handicap_line": "4.5", "handicap_probability": 0.163971915825, "result_probability": 0.880884611315, "side": "HOME", "sources": ["1X2|Wynik meczu (z wyłączeniem dogrywki)|FULL_TIME|||||WIN_LOSE", "HANDICAP_EUROPEAN|Handicap (2-drożny)|FULL_TIME||4.5|TWO_WAY|TWO_WAY_NO_DRAW|NO_PUSH"]}, "severity": "MEDIUM", "type": "RESULT_VS_HANDICAP_TENSION"}
+{"evidence": {"handicap_line": "4", "handicap_probability": 0.171400431319, "result_probability": 0.880884611315, "side": "HOME", "sources": ["1X2|Wynik meczu (z wyłączeniem dogrywki)|FULL_TIME|||||WIN_LOSE", "HANDICAP_EUROPEAN|Handicap|FULL_TIME||4|THREE_WAY|EUROPEAN_THREE_WAY_WITH_DRAW|WIN_DRAW_LOSE"]}, "severity": "MEDIUM", "type": "RESULT_VS_HANDICAP_TENSION"}
+{"evidence": {"handicap_line": "3.5", "handicap_probability": 0.327213748559, "result_probability": 0.880884611315, "side": "HOME", "sources": ["1X2|Wynik meczu (z wyłączeniem dogrywki)|FULL_TIME|||||WIN_LOSE", "HANDICAP_EUROPEAN|Handicap (2-drożny)|FULL_TIME||3.5|TWO_WAY|TWO_WAY_NO_DRAW|NO_PUSH"]}, "severity": "MEDIUM", "type": "RESULT_VS_HANDICAP_TENSION"}
+{"evidence": {"handicap_line": "2.5", "handicap_probability": 0.538227710049, "result_probability": 0.880884611315, "side": "HOME", "sources": ["1X2|Wynik meczu (z wyłączeniem dogrywki)|FULL_TIME|||||WIN_LOSE", "HANDICAP_EUROPEAN|Handicap (2-drożny)|FULL_TIME||2.5|TWO_WAY|TWO_WAY_NO_DRAW|NO_PUSH"]}, "severity": "MEDIUM", "type": "RESULT_VS_HANDICAP_TENSION"}
+{"evidence": {"handicap_line": "1.5", "handicap_probability": 0.734067653937, "result_probability": 0.880884611315, "side": "HOME", "sources": ["1X2|Wynik meczu (z wyłączeniem dogrywki)|FULL_TIME|||||WIN_LOSE", "HANDICAP_EUROPEAN|Handicap (2-drożny)|FULL_TIME||1.5|TWO_WAY|TWO_WAY_NO_DRAW|NO_PUSH"]}, "severity": "MEDIUM", "type": "RESULT_VS_HANDICAP_TENSION"}
+
+[ROW_VALIDATION]
+ACCEPTED_ROWS=427
+QUARANTINED_ROWS=147
+QUARANTINE_REASONS={"EXTRACTOR_EXCLUDED_MARKET:UNCONFIRMED_MARKET_SETTLEMENT": 122, "EXTRACTOR_EXCLUDED_MARKET:UNCONFIRMED_PLAYER_PROP_PERIOD": 4, "EXTRACTOR_EXCLUDED_MARKET:UNSUPPORTED_OPTIONAL_STATISTICS_PERIOD": 12, "SETTLEMENT_UNRECOGNIZED": 9}
+CORE_COVERAGE={"fair_families": ["1X2", "BTTS", "DNB", "GOALS_OU", "HANDICAP_EUROPEAN", "TEAM_TOTALS_AWAY", "TEAM_TOTALS_HOME"], "fair_market_count": 56, "full_time_1x2": true, "goal_market": true, "half_markets": true, "required": ["FULL_TIME_1X2", "AT_LEAST_ONE_GOAL_MARKET"], "safe_handicaps": true, "status": "PASS", "team_totals": true}
+OPTIONAL_COVERAGE={"accepted_odd_rows": 427, "accepted_ratio": 0.979358, "quarantined_odd_rows": 9, "source_odd_rows": 436}
+UNSUPPORTED_FAMILIES=["COMPOUND_LOGIC", "CORRECT_SCORE", "DOUBLE_CHANCE", "EARLY_WIN_OR_TWO_GOAL_LEAD", "FIRST_GOAL_TEAM", "GOALSCORER", "LAST_GOAL_TEAM", "PENALTY_GOAL", "PLAYER_COMBINATION"]
+SEMANTIC_RESOLUTIONS=0
+
+[WARNINGS]
+DEVIG_UNSUPPORTED_FAMILY:COMPOUND_LOGIC:FULL_TIME:Oba zespoły strzelą gola / Liczba bramek
+DEVIG_UNSUPPORTED_FAMILY:COMPOUND_LOGIC:FULL_TIME:Oba zespoły strzelą gola lub Powyżej 2,5 gola w meczu
+DEVIG_UNSUPPORTED_FAMILY:CORRECT_SCORE:1ST_HALF:Dokładny wynik - 1. połowa
+DEVIG_UNSUPPORTED_FAMILY:CORRECT_SCORE:2ND_HALF:Dokładny wynik - 2. połowa
+DEVIG_UNSUPPORTED_FAMILY:CORRECT_SCORE:FULL_TIME:Dokładny wynik
+DEVIG_UNSUPPORTED_FAMILY:CORRECT_SCORE:FULL_TIME:Dokładny wynik w grupie
+DEVIG_UNSUPPORTED_FAMILY:DOUBLE_CHANCE:1ST_HALF:Podwójna szansa
+DEVIG_UNSUPPORTED_FAMILY:DOUBLE_CHANCE:1ST_HALF:Podwójna szansa, obie drużyny zdobywają gole - 1. połowa
+DEVIG_UNSUPPORTED_FAMILY:DOUBLE_CHANCE:2ND_HALF:Podwójna szansa
+DEVIG_UNSUPPORTED_FAMILY:DOUBLE_CHANCE:FULL_TIME:Podwójna Szansa
+DEVIG_UNSUPPORTED_FAMILY:DOUBLE_CHANCE:FULL_TIME:Podwójna szansa
+DEVIG_UNSUPPORTED_FAMILY:DOUBLE_CHANCE:FULL_TIME:Podwójna szansa & oba zespoły strzelą
+DEVIG_UNSUPPORTED_FAMILY:DOUBLE_CHANCE:FULL_TIME:Podwójna szansa & powyżej/poniżej
+DEVIG_UNSUPPORTED_FAMILY:EARLY_WIN_OR_TWO_GOAL_LEAD:FULL_TIME:Przewaga dwoma bramkami lub wygrana w meczu (reg. czas)
+DEVIG_UNSUPPORTED_FAMILY:FIRST_GOAL_TEAM:1ST_HALF:Kto zdobędzie 1. bramkę
+DEVIG_UNSUPPORTED_FAMILY:FIRST_GOAL_TEAM:2ND_HALF:Kto zdobędzie 1. bramkę
+DEVIG_UNSUPPORTED_FAMILY:FIRST_GOAL_TEAM:FULL_TIME:Wynik i kto zdobędzie 1. bramkę
+DEVIG_UNSUPPORTED_FAMILY:FIRST_GOAL_TEAM:FULL_TIME:Zdobędzie bramkę...
+DEVIG_UNSUPPORTED_FAMILY:GOALSCORER:1ST_HALF:Strzelec
+DEVIG_UNSUPPORTED_FAMILY:GOALSCORER:2ND_HALF:Strzelec
+DEVIG_UNSUPPORTED_FAMILY:GOALSCORER:FULL_TIME:2 graczy strzeli pow. 1,5 gole
+DEVIG_UNSUPPORTED_FAMILY:GOALSCORER:FULL_TIME:2 graczy strzeli pow. 2,5 gole
+DEVIG_UNSUPPORTED_FAMILY:GOALSCORER:FULL_TIME:3 graczy strzeli pow. 1,5 gole
+DEVIG_UNSUPPORTED_FAMILY:GOALSCORER:FULL_TIME:3 graczy strzeli pow. 2,5 gole
+DEVIG_UNSUPPORTED_FAMILY:GOALSCORER:FULL_TIME:Czas 1. gola
+DEVIG_UNSUPPORTED_FAMILY:GOALSCORER:FULL_TIME:Czas 1. gola - opcja II
+DEVIG_UNSUPPORTED_FAMILY:GOALSCORER:FULL_TIME:Jeden z graczy strzeli pierwszego gola
+DEVIG_UNSUPPORTED_FAMILY:GOALSCORER:FULL_TIME:Którykolwiek zawodnik strzeli gola
+DEVIG_UNSUPPORTED_FAMILY:GOALSCORER:FULL_TIME:Którykolwiek zawodnik strzeli gola - 3 graczy
+DEVIG_UNSUPPORTED_FAMILY:GOALSCORER:FULL_TIME:Strzelcy
+DEVIG_UNSUPPORTED_FAMILY:GOALSCORER:FULL_TIME:Strzelec
+DEVIG_UNSUPPORTED_FAMILY:GOALSCORER:FULL_TIME:Strzelec - Xtra Wygrana
+DEVIG_UNSUPPORTED_FAMILY:LAST_GOAL_TEAM:FULL_TIME:Zdobędzie bramkę...
+DEVIG_UNSUPPORTED_FAMILY:PENALTY_GOAL:FULL_TIME:Gol z rzutu karnego
+DEVIG_UNSUPPORTED_FAMILY:PLAYER_COMBINATION:FULL_TIME:Obaj gracze strzelą
+DEVIG_UNSUPPORTED_FAMILY:PLAYER_COMBINATION:FULL_TIME:Wszyscy strzelą
+ENGINE_RECONSTRUCTED_CORE_WITHOUT_POSITIVE_EXTRACTOR_READINESS
+INCOMPLETE_MARKET:BTTS:1ST_HALF:Wynik/oba zespoły strzelą - 1. połowa:BENFICA / NIE,BENFICA / TAK,REMIS / TAK
+INCOMPLETE_MARKET:BTTS:2ND_HALF:Wynik/oba zespoły strzelą - 2. połowa:BENFICA / NIE,BENFICA / TAK,REMIS / TAK
+INCOMPLETE_MARKET:BTTS:FULL_TIME:Oba zespoły strzelą w 1. i 2. połowie:NIE / NIE,NIE / TAK,TAK / NIE,TAK / TAK
+INCOMPLETE_MARKET:BTTS:FULL_TIME:Oba zespoły strzelą z rzutu karnego:TAK
+INCOMPLETE_MARKET:BTTS:FULL_TIME:Wynik meczu & oba zespoły strzelą:BENFICA / NIE,BENFICA / TAK,REMIS / TAK
+INCOMPLETE_MARKET:GOALS_OU:FULL_TIME:Obie połowy poniżej 1,5 goli:NIE,TAK
+INCOMPLETE_MARKET:GOALS_OU:FULL_TIME:Obie połowy powyżej 0,5 gola:NIE,TAK
+INCOMPLETE_MARKET:GOALS_OU:FULL_TIME:Obie połowy powyżej 1,5 goli:NIE,TAK
+INSUFFICIENT_MARKETS_FOR_TEAM_LAMBDAS

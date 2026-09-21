@@ -1,0 +1,11 @@
+{
+  "run_id": "run_1788588979_12912",
+  "source": "Recovered verbatim from installed runtime diagnostics; user supplied task text, not the three named evidence files",
+  "files": {
+    "APEX_CONTEXT_PACKET.json": "f3578c3d2d7d9ad2af64e8f46414ee7a0b5704afacebe02c1488dc9a842c4535",
+    "APEX_CONTEXT_REPORT.txt": "0aee2131c8924fd1a1f843b3f672d482399b22e424eace2c3384993433dfd819",
+    "dom_1788588979.json": "466751cd4b1117b876a24e0c6e53d63f97566ca2ef7137bc0a30a88bb328ee08",
+    "raw_before_dedupe_run_1788588979_12912.jsonl": "44851f1235548270907ddfe9b3af4da5db3e0978d835816709023d0f17e742b1",
+    "runtime_build_info.json": "76e188315b303253d6dbefc50ab033fa39ebca8ba5b2bc0704e1060ae8e74fa2"
+  }
+}

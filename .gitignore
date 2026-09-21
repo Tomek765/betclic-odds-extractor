@@ -1,0 +1,55 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+venv/
+.venv/
+env/
+
+.env
+.env.*
+*.env
+
+.pytest_cache/
+.mypy_cache/
+.cache/
+
+.vscode/
+.idea/
+
+node_modules/
+
+*.log
+*.tmp
+*.temp
+
+build/
+dist/
+*.egg-info/
+
+Thumbs.db
+Desktop.ini
+
+*.zip
+*.rar
+*.7z# Wygenerowane dane tego projektu
+browser_profile/
+build/
+dist/
+installer_output/
+logs/
+diagnostics/
+
+# Python cache
+__pycache__/
+.pytest_cache/
+*.pyc
+
+# Pliki kompilacji/instalacji
+*.exe
+*.dll
+
+# Dane lokalne/tymczasowe
+runtime_build_info.json
+*.bak

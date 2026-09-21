@@ -1,0 +1,16 @@
+{
+  "fixture_type": "FULL_IMMUTABLE_REAL_CAPTURE_WITH_ORIGINAL_CONTEXT_OUTPUTS",
+  "match": "Benfica - Heart of Midlothian",
+  "normalized_packet_sha256": "0a9926f0e301a6b1b7fcdad0c5b0602a904b2dcbc4876860685665feee868d7e",
+  "raw_capture_file": "raw_before_dedupe_run_1786040883_6248.jsonl",
+  "raw_capture_records": 692,
+  "source_odd_rows": 436,
+  "accepted_source_rows": 427,
+  "quarantined_source_rows": 9,
+  "upstream_excluded_rows": 138,
+  "total_observed_rows": 574,
+  "original_context_packet": "original_context_packet.json",
+  "original_context_report": "original_context_report.txt",
+  "synthetic": false,
+  "shortened": false
+}

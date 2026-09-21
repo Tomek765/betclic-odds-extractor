@@ -1,0 +1,10 @@
+{
+  "fixture_kind": "FULL_REAL_PACKET",
+  "match": "San Antonio FC - Gualaceo SC",
+  "required_field_input_sha256": "cf496c91adc45c0e27a3e1bd371c47e719bfd28d85a025eaec8b365ff49e8a91",
+  "stored_full_capture_sha256": "43eb071b2cf95ce9bf361e7b0d899b1a170be9ceef75356b39cedc23db7809cc",
+  "source_odd_rows": 94,
+  "accepted_rows": 92,
+  "quarantined_rows": 2,
+  "note": "The required field SHA is preserved from the original GUI field run; the stored full capture is the complete repeat capture of the same event and market set."
+}

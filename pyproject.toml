@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=70"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "apex-context-engine"
+version = "1.0.0"
+description = "Deterministic Betclic odds extraction and market context engine"
+requires-python = ">=3.11"
+dependencies = [
+  "playwright>=1.40.0",
+  "playwright-stealth>=2.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = [".", "tests_context"]
+python_files = ["test_*.py", "test_suite.py"]
+addopts = "-ra"

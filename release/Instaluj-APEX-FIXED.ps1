@@ -13,7 +13,8 @@ Set-StrictMode -Version 3
 $ErrorActionPreference = "Stop"
 
 $ReleaseName  = "APEX_Context_Engine_FIXED_2026-09-27"
-$BuildId      = "APEX_CONTEXT_ENGINE_FIXED_20260927"
+$BuildId      = "APEX_CONTEXT_ENGINE_FIXED_20260927_CLEAN"
+$BuildFamily  = "APEX_CONTEXT_ENGINE_FIXED_"
 $ShortcutName = "APEX Context Engine - FIXED"
 $Source  = $PSScriptRoot
 $Dest    = Join-Path $env:LOCALAPPDATA "Programs\$ReleaseName"
@@ -42,8 +43,9 @@ $sourceFull = (Resolve-Path $Source).Path.TrimEnd("\")
 if (-not [string]::Equals($sourceFull, $Dest, [StringComparison]::OrdinalIgnoreCase)) {
     if (Test-Path $Dest) {
         $info = Join-Path $Dest "BUILD_INFO.txt"
-        if (-not ((Test-Path $info) -and (Select-String -Path $info -Pattern $BuildId -SimpleMatch -Quiet))) {
-            Stop-Install "Folder $Dest istnieje i nie zawiera tego buildu - nie nadpisuje."
+        # Only an earlier FIXED build installed by this installer is replaced.
+        if (-not ((Test-Path $info) -and (Select-String -Path $info -Pattern $BuildFamily -SimpleMatch -Quiet))) {
+            Stop-Install "Folder $Dest istnieje i nie zawiera buildu FIXED - nie nadpisuje."
         }
         Get-Process -Name "APEX_Context_Engine" -ErrorAction SilentlyContinue |
             Where-Object { $_.Path -and $_.Path.StartsWith($Dest, [StringComparison]::OrdinalIgnoreCase) } |

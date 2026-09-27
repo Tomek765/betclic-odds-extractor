@@ -783,7 +783,8 @@ def partition_semantic_records(rows: list[dict[str, Any]]) -> tuple[list[dict[st
 def attach_structural_provenance(record, source):
     """Preserve the same dedupe evidence in capture and replay; never infer it."""
     for target, key in (("PERIOD_SCOPE_ID", "period_scope_id"), ("ROW_ID", "row_id"),
-                        ("COLUMN_ID", "column_id"), ("NATIVE_SELECTION_ID", "native_selection_id")):
+                        ("COLUMN_ID", "column_id"), ("NATIVE_SELECTION_ID", "native_selection_id"),
+                        ("SECTION_SOURCE", "section_source"), ("SECTION_KEY", "section_key")):
         record[target] = source.get(key) or ""
 
 
@@ -842,6 +843,8 @@ def semantic_quarantine_ledger(rows: list[dict[str, Any]]) -> list[dict[str, Any
             "source_raw_record_ids": list(row.get("source_raw_record_ids") or []),
             "market_instance_id": row.get("MARKET_INSTANCE_ID") or "",
             "dom_path": row.get("DOM_PATH") or "",
+            "section_path": row.get("SECTION_PATH") or "",
+            "section_source": row.get("SECTION_SOURCE") or "",
         })
     return ledger
 
@@ -1378,6 +1381,57 @@ def _make_dom_script() -> str:
         + "  const siblingIndex = e => { if(!e||!e.parentElement)return 0; return Array.prototype.indexOf.call(e.parentElement.children,e); };" + NL
         + "  const nodePath = e => { const out=[]; for(let n=e;n&&n!==document.body;n=n.parentElement){ const tag=n.tagName?n.tagName.toLowerCase():''; const key=n.getAttribute('data-qa')||n.getAttribute('data-testid')||n.id||n.className||''; out.push(tag+'['+String(key).replace(/\\s+/g,'.').slice(0,60)+'#'+siblingIndex(n)+']'); } return out.reverse().join('>'); };" + NL
         + "  const isMyCombi = (currentTabName || '').trim().toLowerCase().includes('mycombi');" + NL
+        # Section (category) context is bound structurally, never by the first
+        # header found anywhere below a shared ancestor.  Betclic renders
+        # marketBox_categoryTitle headings as flat siblings of the markets in
+        # one scroller list and links them by data-section; the old
+        # ancestor.querySelector walk returned the list's first heading for
+        # every market in the tab.  Resolution stops at the innermost scope
+        # that owns headings and never climbs above the market list root, so
+        # page chrome and statistics widgets cannot become market context.
+        + "  const SECTION_HEADER_SEL = '.marketBox_categoryTitle, .accordion_header, .sectionHeader, .marketBox_groupTitle, [class*=\"accordionTitle\"], [class*=\"groupTitle\"], [class*=\"accordion_head\"], [class*=\"categoryTitle\"]';" + NL
+        + "  const MARKET_BOUNDARY_SEL = 'div.marketBox, sports-market';" + NL
+        + "  const MARKET_LIST_ROOT_SEL = '.verticalScroller_list, sports-match-markets, [role=\"tabpanel\"]';" + NL
+        + "  const sectionKeyOf = e => { const s = e && e.closest ? e.closest('[data-section]') : null; return s ? String(s.getAttribute('data-section') || '') : ''; };" + NL
+        + "  const sectionCache = new Map();" + NL
+        + "  const resolveSection = (anchor, marketTitle) => {" + NL
+        + "    const cacheKey = marketTitle;" + NL
+        + "    let perAnchor = sectionCache.get(anchor);" + NL
+        + "    if (perAnchor && perAnchor.has(cacheKey)) return perAnchor.get(cacheKey);" + NL
+        + "    const ownKey = sectionKeyOf(anchor);" + NL
+        + "    let result = { title: '', source: 'NONE', key: ownKey };" + NL
+        + "    let branch = anchor;" + NL
+        + "    for (let scope = anchor.parentElement; scope && scope !== document.body; branch = scope, scope = scope.parentElement) {" + NL
+        + "      const headers = Array.from(scope.querySelectorAll(SECTION_HEADER_SEL)).filter(h => {" + NL
+        + "        if (branch.contains(h) || h.contains(anchor)) return false;" + NL
+        + "        const hostMarket = h.closest(MARKET_BOUNDARY_SEL);" + NL
+        + "        if (hostMarket && !hostMarket.contains(anchor)) return false;" + NL
+        + "        const t = cleanText(h.innerText || h.textContent);" + NL
+        + "        return Boolean(t) && t.length < 80;" + NL
+        + "      });" + NL
+        + "      if (headers.length) {" + NL
+        + "        const preceding = headers.filter(h => h.compareDocumentPosition(branch) & Node.DOCUMENT_POSITION_FOLLOWING);" + NL
+        + "        let chosen = null; let source = '';" + NL
+        + "        if (ownKey) {" + NL
+        + "          chosen = preceding.filter(h => sectionKeyOf(h) === ownKey).pop() || headers.find(h => sectionKeyOf(h) === ownKey) || null;" + NL
+        + "          source = 'DATA_SECTION_HEADER';" + NL
+        + "          if (!chosen) { const near = preceding[preceding.length - 1]; if (near && !sectionKeyOf(near)) { chosen = near; source = 'PRECEDING_SECTION_HEADER'; } }" + NL
+        + "        } else {" + NL
+        + "          chosen = preceding[preceding.length - 1] || null;" + NL
+        + "          source = 'PRECEDING_SECTION_HEADER';" + NL
+        + "        }" + NL
+        + "        const chosenTitle = chosen ? cleanText(chosen.innerText || chosen.textContent) : '';" + NL
+        + "        if (!chosen) result = { title: '', source: 'NONE_UNBOUND_SECTION_HEADERS', key: ownKey };" + NL
+        + "        else if (chosenTitle === marketTitle) result = { title: '', source: 'SECTION_HEADER_EQUALS_MARKET_TITLE', key: ownKey };" + NL
+        + "        else result = { title: chosenTitle, source: source, key: ownKey };" + NL
+        + "        break;" + NL
+        + "      }" + NL
+        + "      if (scope.matches(MARKET_LIST_ROOT_SEL)) break;" + NL
+        + "    }" + NL
+        + "    if (!perAnchor) { perAnchor = new Map(); sectionCache.set(anchor, perAnchor); }" + NL
+        + "    perAnchor.set(cacheKey, result);" + NL
+        + "    return result;" + NL
+        + "  };" + NL
         + "  const rawElements = Array.from(document.querySelectorAll('button.is-odd, button[class*=\"odd\"], [class*=\"oddValue\"]'));" + NL
         + "  const seenButtons = new Set();" + NL
         + "  let sourceIndex = 0;" + NL
@@ -1386,6 +1440,11 @@ def _make_dom_script() -> str:
         + "    if (seenButtons.has(btn)) continue;" + NL
         + "    seenButtons.add(btn);" + NL
         + "    if (btn.disabled || btn.getAttribute('aria-disabled') === 'true') continue;" + NL
+        # The persistent bet slip is application state rendered beside every
+        # tab (its MyCombi state has a dedicated extractor).  Its readonly
+        # price copies are never market rows; excluding them here covers the
+        # crawler, the Strzelcy retry and the zero-raw active-panel fallback.
+        + "    if (btn.closest('sports-betting-slip')) continue;" + NL
         + "    const oddsEl = btn.querySelector('.oddValue, [class*=\"oddValue\"], .is-oddValue') || btn;" + NL
         + "    let oddsText = cleanText(oddsEl.innerText || oddsEl.textContent);" + NL
         + "    const m = Array.from(oddsText.matchAll(/([1-9]\\d{0,2}(?:[.,]\\d{1,2})?)/g)).pop();" + NL
@@ -1444,18 +1503,8 @@ def _make_dom_script() -> str:
         + "    const participantHint = sliderEl ? selectionLabel : null;" + NL
         + "    const sliderSelectionEl = sliderEl ? btn.querySelector('bcdk-bet-button-label, .btn_label.is-top') : null;" + NL
         + "    const sliderSelectionLabel = sliderSelectionEl ? cleanText(sliderSelectionEl.innerText || sliderSelectionEl.textContent) : '';" + NL
-        + "    let currAncest = marketBox ? marketBox.parentElement : btn.parentElement;" + NL
-        + "    while (currAncest && currAncest !== document.body) {" + NL
-        + "      const headEl = currAncest.querySelector('.accordion_header, .sectionHeader, .marketBox_groupTitle, [class*=\"accordionTitle\"], [class*=\"groupTitle\"], [class*=\"accordion_head\"], [class*=\"categoryTitle\"]');" + NL
-        + "      if (headEl) {" + NL
-        + "        const txtAncest = cleanText(headEl.innerText || headEl.textContent);" + NL
-        + "        if (txtAncest && txtAncest.length < 80 && txtAncest !== marketTitle) {" + NL
-        + "          ancestorTitle = txtAncest;" + NL
-        + "          break;" + NL
-        + "        }" + NL
-        + "      }" + NL
-        + "      currAncest = currAncest.parentElement;" + NL
-        + "    }" + NL
+        + "    const sectionContext = resolveSection(marketBox || btn, marketTitle);" + NL
+        + "    ancestorTitle = sectionContext.title;" + NL
         + "    if (!sectionTitle && ancestorTitle) sectionTitle = ancestorTitle;" + NL
         + "    if (isTopMyCombiCard && !hadMarketHeader && !sectionTitle && !ancestorTitle) continue;" + NL
         + "    const periodEl = lineEl ? lineEl.closest('[data-period], [data-period-name], .marketBox_body, .marketBox') : marketBox;" + NL
@@ -1503,6 +1552,8 @@ def _make_dom_script() -> str:
         + "      selection: sel," + NL
         + "      section_title: sectionTitle," + NL
         + "      ancestor_title: ancestorTitle," + NL
+        + "      section_source: sectionContext.source," + NL
+        + "      section_key: sectionContext.key," + NL
         + "      active_tab: currentTabName," + NL
         + "      active_subtab: activeSubtab," + NL
         + "      period_hint: periodHint," + NL
@@ -2312,6 +2363,8 @@ class BetclicOddsExtractor:
                         "heading_path": item.get("heading_path") or "",
                         "section_title": item.get("section_title") or "",
                         "ancestor_title": item.get("ancestor_title") or "",
+                        "section_source": item.get("section_source") or "",
+                        "section_key": item.get("section_key") or "",
                         "active_tab": item.get("active_tab") or tab_name,
                         "active_subtab": item.get("active_subtab") or "",
                         "period_hint": item.get("period_hint") or "",

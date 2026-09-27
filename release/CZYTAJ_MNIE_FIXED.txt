@@ -1,0 +1,33 @@
+APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20260927)
+
+INSTALACJA (Windows 10/11 x64)
+1. Rozpakuj caly ZIP (np. do Pobrane).
+2. Wejdz do folderu APEX_Context_Engine_FIXED_2026-09-27.
+3. Kliknij dwukrotnie INSTALUJ.cmd.
+   - program zostanie skopiowany do
+     %LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
+   - na pulpicie pojawi sie skrot "APEX Context Engine - FIXED"
+   - program uruchomi sie z tego skrotu, a instalator sprawdzi, ze dziala
+     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20260927)
+   - wynik zapisuje sie w INSTALL_REPORT.txt w folderze programu
+4. Jesli Windows SmartScreen pokaze "System Windows ochronil ten komputer",
+   wybierz "Wiecej informacji" -> "Uruchom mimo to" (plik nie jest podpisany).
+
+Mozna tez uruchomic APEX_Context_Engine.exe bezposrednio z rozpakowanego
+folderu (wersja portable) - bez instalacji.
+
+STARA WERSJA
+Nie jest zmieniana ani usuwana. Stary skrot "APEX Context Engine" nadal
+uruchamia poprzedni program. Oba programy zapisuja wyniki w
+%LOCALAPPDATA%\APEX Context Engine (kazdy przebieg w osobnych plikach).
+
+CO NAPRAWIONO
+- Kazdy rynek dostaje kontekst wlasnej sekcji Betclic (data-section), a nie
+  pierwszej sekcji zakladki. Kolejnosc sekcji nie zmienia juz okresu,
+  zakresu strzelca ani uczestnika (usuniete falszywe kwarantanny i ciche
+  bledne akceptacje).
+- Przyciski kuponu (bet slip) nie trafiaja do rekordow kursowych.
+- Rekordy i raport kwarantanny zawieraja zrodlo sekcji (SECTION_SOURCE).
+- Kwarantanna nadal dziala fail-closed dla rzeczywiscie niejednoznacznych rynkow.
+
+Szczegoly buildu: BUILD_INFO.txt

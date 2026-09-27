@@ -24,6 +24,7 @@ def _partial_result_details(result: dict[str, Any]) -> dict[str, Any]:
         "unresolved_count": unresolved_count,
         "reason": ", ".join(str(reason) for reason in reasons if reason),
         "packet_text": result.get("packet_text", ""),
+        "llm_packet_text": result.get("llm_packet_text", ""),
     }
 
 
@@ -344,9 +345,7 @@ class BetclicExtractorGUI:
             self.val_markets.config(text=str(result.get("market_count", 0)))
             self.val_odds.config(text=str(result.get("odds_count", 0)))
             self.val_unresolved.config(text=str(result.get("unresolved_count", 0)))
-            self.current_packet = result.get("packet_text", "")
-            self.txt_preview.delete("1.0", tk.END)
-            self.txt_preview.insert("1.0", self.current_packet)
+            self._show_packet(result.get("packet_text", ""), result.get("llm_packet_text", ""))
             self.btn_copy.config(state="normal")
             self._refresh_context_button()
         elif result.get("status") == "PARTIAL":
@@ -361,9 +360,7 @@ class BetclicExtractorGUI:
             self.val_markets.config(text=str(result.get("market_count", 0)))
             self.val_odds.config(text=str(details["odds_count"]))
             self.val_unresolved.config(text=str(details["unresolved_count"]))
-            self.current_packet = details["packet_text"]
-            self.txt_preview.delete("1.0", tk.END)
-            self.txt_preview.insert("1.0", self.current_packet)
+            self._show_packet(details["packet_text"], details["llm_packet_text"])
             self.btn_copy.config(state="normal")
             self._refresh_context_button()
         elif _is_completed_gated_capture(result):
@@ -378,9 +375,7 @@ class BetclicExtractorGUI:
             self.val_markets.config(text=str(result.get("market_count", 0)))
             self.val_odds.config(text=str(details["odds_count"]))
             self.val_unresolved.config(text=str(details["unresolved_count"]))
-            self.current_packet = details["packet_text"]
-            self.txt_preview.delete("1.0", tk.END)
-            self.txt_preview.insert("1.0", self.current_packet)
+            self._show_packet(details["packet_text"], details["llm_packet_text"])
             self.btn_copy.config(state="normal")
             self._refresh_context_button()
         else:
@@ -389,6 +384,13 @@ class BetclicExtractorGUI:
             self.lbl_status_msg.config(text=f"Błąd: {err[:70]}")
             self.progress["value"] = 0
             messagebox.showerror("Błąd pobierania", f"Nie udało się pobrać kursów:\n\n{err}")
+
+    def _show_packet(self, packet_text: str, llm_packet_text: str) -> None:
+        # The internal packet stays in memory for the Context Engine only; the
+        # preview and the copy button always carry the clean LLM odds text.
+        self.current_packet = packet_text
+        self.txt_preview.delete("1.0", tk.END)
+        self.txt_preview.insert("1.0", llm_packet_text)
 
     def copy_packet(self) -> None:
         content = self.txt_preview.get("1.0", tk.END).strip()

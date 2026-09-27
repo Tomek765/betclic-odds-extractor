@@ -267,6 +267,8 @@ def parse_packet_text(text: str) -> ParsedPacket:
             participant=fields.get("PARTICIPANT", "").strip(),
             source_raw_record_ids=_source_record_ids(fields.get("SOURCE_RAW_RECORD_IDS", "")),
             event_teams=tuple(teams),
+            selection_text=fields["SELECTION"].strip(),
+            participants=tuple(p.strip() for p in fields.get("PARTICIPANTS", "").split(" + ") if p.strip()),
         ))
 
     if not odds:

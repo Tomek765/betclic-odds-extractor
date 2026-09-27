@@ -170,6 +170,7 @@ def build_context(packet: ParsedPacket) -> ContextPacket:
         total_observed_rows=packet.source_odd_count + len(upstream_exclusions),
         semantic_safety_quarantine=safety_quarantine,
         upstream_exclusions=upstream_exclusions,
+        accepted_odds=list(packet.odds),
         warning_dispositions=[{"warning": warning,
             "disposition": "ACCEPTED_NOT_APPLICABLE" if warning.startswith((
                 "DEVIG_UNSUPPORTED_FAMILY:", "NON_FOOTBALL_FAIR_MARKET_REJECTED:"))

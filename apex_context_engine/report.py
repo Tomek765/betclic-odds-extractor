@@ -5,7 +5,8 @@ import os
 import tempfile
 from pathlib import Path
 
-from .models import ContextPacket
+from .llm_format import render_llm_odds
+from .models import ContextPacket, OddRecord
 
 
 def render_json(context: ContextPacket) -> str:
@@ -81,11 +82,33 @@ def render_text(context: ContextPacket) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _llm_record(odd: OddRecord) -> dict[str, object]:
+    return {"FAMILY": odd.family, "MARKET": odd.market, "PERIOD": odd.period, "OWNER": odd.owner,
+            "SELECTION": odd.selection_text or odd.selection, "LINE": odd.line, "ODDS": odd.odds, "SETTLEMENT": odd.settlement,
+            "HANDICAP_KIND": odd.handicap_kind, "HANDICAP_TAXONOMY": odd.handicap_taxonomy,
+            "PARTICIPANT": odd.participant, "PARTICIPANTS": list(odd.participants),
+            "SCORER_SCOPE": odd.scorer_scope, "RAW": odd.raw}
+
+
+def render_llm_context(context: ContextPacket) -> str:
+    """The context text a user pastes into an LLM: match header and accepted bets only."""
+    status = "BLOCKED" if context.status == "BLOCKED" else ""
+    return render_llm_odds(context.input_truth, (_llm_record(odd) for odd in context.accepted_odds), status)
+
+
 def write_outputs(context: ContextPacket, output_dir: str | Path) -> tuple[Path, Path]:
+    """Write the internal audit JSON/TXT and the clean user-facing report.
+
+    APEX_CONTEXT_REPORT.txt is what the application copies and opens for the
+    user, so it is the clean LLM text.  The full technical audit is kept in
+    APEX_CONTEXT_AUDIT.txt for diagnostics only.
+    """
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
     json_path, text_path = out / "APEX_CONTEXT_PACKET.json", out / "APEX_CONTEXT_REPORT.txt"
-    for path, content in ((json_path, render_json(context)), (text_path, render_text(context))):
+    audit_path = out / "APEX_CONTEXT_AUDIT.txt"
+    for path, content in ((json_path, render_json(context)), (audit_path, render_text(context)),
+                          (text_path, render_llm_context(context))):
         temp_name = ""
         try:
             with tempfile.NamedTemporaryFile("w", encoding="utf-8", newline="\n", dir=out, prefix=f".{path.name}.", suffix=".tmp", delete=False) as handle:

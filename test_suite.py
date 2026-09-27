@@ -1067,6 +1067,11 @@ class TestBetclicExtractorSuite(unittest.TestCase):
 
         self.assertIn('EVENT_STATUS="GOTOWE";', res.get("packet_text", ""))
         self.assertIn('ANALYSIS_READY="YES";', res.get("packet_text", ""))
+        clean = res.get("llm_packet_text", "")
+        self.assertIn("\nODDS\nFAMILY|MARKET|PERIOD|OWNER|SELECTION|LINE|ODDS|SETTLEMENT\n", clean)
+        self.assertRegex(clean, r"\nODDS_COUNT=[1-9]\d*\n")
+        for junk in ("MARKET_INSTANCE_ID", "SOURCE_RAW_RECORD_IDS", "RUNTIME_", "SHA256", "BUILD_ID", "RUN_ID", "app-desktop["):
+            self.assertNotIn(junk, clean)
 
     def test_54_live_guard_live_selector_status(self) -> None:
         from unittest.mock import MagicMock, patch

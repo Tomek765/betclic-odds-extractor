@@ -20,6 +20,7 @@ from diagnostics import (
     SNAPSHOTS_DIR,
     DiagnosticsManager,
 )
+from apex_context_engine.llm_format import render_llm_odds
 from exhaustive import ExhaustiveStateCrawler
 from history_contract_v0_1 import (
     build_history_observation,
@@ -778,6 +779,16 @@ def partition_semantic_records(rows: list[dict[str, Any]]) -> tuple[list[dict[st
     for row in rows:
         (quarantined if is_semantically_quarantined(row) else accepted).append(row)
     return accepted, quarantined
+
+
+def llm_packet(match: str, competition: str, kickoff: str, accepted_odds: list[dict[str, Any]],
+               readiness: dict[str, Any]) -> str:
+    """User/LLM odds text: every semantically accepted bet, no technical metadata."""
+    complete = (readiness.get("PARSER_TRUTH_STATUS") == "PASS"
+                and readiness.get("ANALYSIS_READY") == "YES")
+    status = "" if complete else str(readiness.get("PARSER_TRUTH_STATUS") or "PARTIAL")
+    return render_llm_odds({"MATCH": match, "COMPETITION": competition, "KICKOFF": kickoff},
+                           accepted_odds, status)
 
 
 def attach_structural_provenance(record, source):
@@ -2889,6 +2900,7 @@ class BetclicOddsExtractor:
                 f'PERIOD_CONFIDENCE="{item.get("PERIOD_CONFIDENCE", "")}";',
                 f'SCORER_SCOPE="{item.get("SCORER_SCOPE", "")}";',
                 f'PARTICIPANT="{item.get("PARTICIPANT", "")}";',
+                f'PARTICIPANTS="{" + ".join(item.get("PARTICIPANTS") or [])}";',
                 f'SOURCE_RAW_RECORD_IDS="{",".join(item.get("source_raw_record_ids") or [])}";',
                 f'MARKET_INSTANCE_ID="{item.get("MARKET_INSTANCE_ID", "")}";',
                 "}",
@@ -2983,6 +2995,10 @@ class BetclicOddsExtractor:
             ]
 
         packet_text = "\n".join(packet_lines)
+        # packet_text is the internal machine packet: the Context Engine needs
+        # its lineage ids and accounting, diagnostics keep the rest.  Users and
+        # LLMs get only the bets, natively serialized without any of that.
+        llm_packet_text = llm_packet(match_str, comp_str, kickoff_str, export_odds, readiness)
         elapsed = round(time.time() - run_start_time, 2)
         self.diag.log(f"Extraction done in {elapsed}s: truth_status={global_truth_status}, ready={analysis_ready}, tabs={scanned_tabs}, markets={market_count}, odds={odds_count}, unresolved={unresolved_count}")
 
@@ -3109,5 +3125,6 @@ class BetclicOddsExtractor:
             "unresolved": unresolved_items,
             "equivalence_groups": equivalence_groups,
             "packet_text": packet_text,
+            "llm_packet_text": llm_packet_text,
             "execution_time_sec": elapsed,
         }

@@ -35,6 +35,7 @@ def capture_packet(path):
             'SETTLEMENT ODDS RAW PERIOD_SOURCE PERIOD_CONFIDENCE SCORER_SCOPE PARTICIPANT MARKET_INSTANCE_ID').split()
     for row in accepted:
         fields = {k:row.get(k,'') for k in keys}
+        fields['PARTICIPANTS'] = ' + '.join(row.get('PARTICIPANTS') or [])
         fields['SOURCE_RAW_RECORD_IDS'] = ','.join(row.get('source_raw_record_ids') or [])
         text += block('ODD',fields)
     for group in build_equivalence_groups(accepted):

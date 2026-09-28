@@ -33,6 +33,7 @@
     "total_observed_rows": {"type": "integer", "minimum": 0},
     "semantic_safety_quarantine": {"type": "array", "items": {"type": "object"}},
     "upstream_exclusions": {"type": "array", "items": {"type": "object"}},
+    "not_modeled_rows": {"type": "array", "items": {"type": "object"}},
     "warning_dispositions": {"type": "array", "items": {"type": "object"}}
   },
   "additionalProperties": false

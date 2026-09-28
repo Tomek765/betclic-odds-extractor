@@ -27,9 +27,6 @@ class OddRecord:
     participant: str = ""
     source_raw_record_ids: tuple[str, ...] = ()
     event_teams: tuple[str, ...] = ()
-    # Verbatim bet text for the clean LLM report; never used for identity.
-    selection_text: str = field(default="", compare=False)
-    participants: tuple[str, ...] = field(default=(), compare=False)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -102,10 +99,7 @@ class ContextPacket:
     semantic_safety_quarantine: list[dict[str, Any]]
     upstream_exclusions: list[dict[str, Any]] = field(default_factory=list)
     warning_dispositions: list[dict[str, str]] = field(default_factory=list)
-    # Accepted bets for the clean LLM report only; never part of the audit JSON.
-    accepted_odds: list[OddRecord] = field(default_factory=list, repr=False, compare=False)
+    not_modeled_rows: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
-        data = asdict(self)
-        data.pop("accepted_odds", None)
-        return data
+        return asdict(self)

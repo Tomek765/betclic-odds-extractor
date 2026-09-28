@@ -74,6 +74,9 @@ def validate_packet(packet: ParsedPacket) -> tuple[list[str], list[str]]:
     return sorted(set(errors)), sorted(set(warnings))
 
 
+NOT_MODELED_REASONS = frozenset({"UNSUPPORTED_PERIOD:OTHER", "UNSUPPORTED_PERIOD:QUALIFICATION"})
+
+
 def build_context(packet: ParsedPacket) -> ContextPacket:
     blocked, warnings = validate_packet(packet)
     readiness_blocked = "EXTRACTOR_READINESS_NOT_POSITIVE" in blocked
@@ -89,7 +92,14 @@ def build_context(packet: ParsedPacket) -> ContextPacket:
         blocked.append("MINIMAL_CORE_MISSING_FULL_TIME_1X2")
     if not has_goal_core:
         blocked.append("MINIMAL_CORE_MISSING_GOAL_MARKET")
-    source_quarantine = [row for row in packet.quarantined_rows if row.get("block_type") == "ODD"]
+    # A row whose only problem is an explicit, proven period outside the fair
+    # model (extra time, penalties, qualification) is a valid bet that this
+    # engine does not price.  Like unsupported families, it is reported as
+    # NOT_MODELED, never as a quarantine.  Every other reason stays quarantine.
+    not_modeled_rows = [row for row in packet.quarantined_rows if row.get("block_type") == "ODD"
+                        and row.get("reasons") and set(row["reasons"]) <= NOT_MODELED_REASONS]
+    source_quarantine = [row for row in packet.quarantined_rows if row.get("block_type") == "ODD"
+                         and not (row.get("reasons") and set(row["reasons"]) <= NOT_MODELED_REASONS)]
     upstream_exclusions = [row for row in packet.quarantined_rows if row.get("block_type") != "ODD"]
     quarantine_reasons = Counter(reason for row in source_quarantine for reason in row.get("reasons", []))
     quarantined_odds = len(source_quarantine)
@@ -120,12 +130,13 @@ def build_context(packet: ParsedPacket) -> ContextPacket:
         "ACCEPTED_SUPPORTED": supported_count,
         "ACCEPTED_NOT_APPLICABLE": len(packet.odds) - len(unsafe_indices) - supported_count,
         "TRUE_QUARANTINE_SOURCE": len(source_quarantine) + len(unsafe_indices),
+        "NOT_MODELED_SOURCE": len(not_modeled_rows),
         "TRUE_QUARANTINE_UPSTREAM": sum(row.get("block_type") == "SEMANTIC_QUARANTINE" for row in upstream_exclusions),
         "AUDITED_EXCLUSION": sum(row.get("block_type") != "SEMANTIC_QUARANTINE" for row in upstream_exclusions),
         "BLOCKING_ERROR": len(blocked),
     }
     optional_coverage["disposition_population"] = (
-        "SUPPORTED + NOT_APPLICABLE + TRUE_QUARANTINE_SOURCE = SOURCE_ODD_ROWS; "
+        "SUPPORTED + NOT_APPLICABLE + TRUE_QUARANTINE_SOURCE + NOT_MODELED_SOURCE = SOURCE_ODD_ROWS; "
         "UPSTREAM and AUDITED_EXCLUSION count emitted upstream blocks; BLOCKING_ERROR counts reasons"
     )
     equivalence = audit_equivalence(packet, alerts)
@@ -170,7 +181,7 @@ def build_context(packet: ParsedPacket) -> ContextPacket:
         total_observed_rows=packet.source_odd_count + len(upstream_exclusions),
         semantic_safety_quarantine=safety_quarantine,
         upstream_exclusions=upstream_exclusions,
-        accepted_odds=list(packet.odds),
+        not_modeled_rows=not_modeled_rows,
         warning_dispositions=[{"warning": warning,
             "disposition": "ACCEPTED_NOT_APPLICABLE" if warning.startswith((
                 "DEVIG_UNSUPPORTED_FAMILY:", "NON_FOOTBALL_FAIR_MARKET_REJECTED:"))

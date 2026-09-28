@@ -2900,7 +2900,6 @@ class BetclicOddsExtractor:
                 f'PERIOD_CONFIDENCE="{item.get("PERIOD_CONFIDENCE", "")}";',
                 f'SCORER_SCOPE="{item.get("SCORER_SCOPE", "")}";',
                 f'PARTICIPANT="{item.get("PARTICIPANT", "")}";',
-                f'PARTICIPANTS="{" + ".join(item.get("PARTICIPANTS") or [])}";',
                 f'SOURCE_RAW_RECORD_IDS="{",".join(item.get("source_raw_record_ids") or [])}";',
                 f'MARKET_INSTANCE_ID="{item.get("MARKET_INSTANCE_ID", "")}";',
                 "}",

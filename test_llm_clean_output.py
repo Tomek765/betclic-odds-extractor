@@ -129,7 +129,7 @@ class CleanLlmOutput(unittest.TestCase):
 
 
 class CleanContextReport(unittest.TestCase):
-    def test_context_report_is_clean_and_audit_is_internal(self):
+    def test_context_report_is_clean_market_context_and_audit_is_internal(self):
         from tests_context.capture_repair_support import capture_packet
         internal, _, _ = capture_packet(CAPTURE)
         context = build_context(parse_packet_text(internal))
@@ -139,12 +139,11 @@ class CleanContextReport(unittest.TestCase):
             audit = (Path(tmp) / "APEX_CONTEXT_AUDIT.txt").read_text(encoding="utf-8")
         self.assertEqual(text_path.name, "APEX_CONTEXT_REPORT.txt")
         self.assertIn("QUARANTINED_RECORDS", audit)
-        for token in FORBIDDEN + ("LAMBDA", "FAIR_1X2", "INPUT_SHA256"):
+        for token in FORBIDDEN + ("INPUT_SHA256", "record_mappings", "source_raw_record_ids"):
             self.assertNotIn(token, report)
-        self.assertTrue(report.startswith(f"MATCH={HOME} - {AWAY}\n"))
-        self.assertLess(len(report.encode("utf-8")) / len(_rows(report)), 150)
-        self.assertEqual(len(_rows(report)), int(re.search(r"ODDS_COUNT=(\d+)", report).group(1)))
-        self.assertGreater(len(_rows(report)), 700)
+        self.assertTrue(report.startswith("APEX_MATCH_CONTEXT\n"))
+        self.assertIn("[MARKET_SCRIPT]", report)
+        self.assertNotIn("|".join(COLUMNS), report)  # the odds table belongs to the package
 
 
 class CopyButtonUsesCleanOutput(unittest.TestCase):
@@ -162,16 +161,9 @@ class CopyButtonUsesCleanOutput(unittest.TestCase):
             with patch.object(gui.messagebox, "showinfo"), patch.object(gui, "packet_is_ready", return_value=True):
                 app._on_done({"status": "GOTOWE", "packet_text": internal, "llm_packet_text": CLEAN,
                               "odds_count": len(ACCEPTED)})
-                app.copy_packet()
+                app.btn_copy.invoke()
             self.assertEqual(root.clipboard_get().strip(), CLEAN.strip())
             self.assertEqual(app.current_packet, internal)
-            with tempfile.TemporaryDirectory() as tmp:
-                report = Path(tmp) / "APEX_CONTEXT_REPORT.txt"
-                report.write_text(CLEAN, encoding="utf-8")
-                result = gui.ContextRunResult("PASS", Path(tmp) / "x.json", report, "")
-                with patch.object(gui.messagebox, "showinfo"), patch.object(os, "startfile", create=True):
-                    app._on_context_done(result)
-            self.assertEqual(root.clipboard_get().strip(), CLEAN.strip())
         finally:
             root.destroy()
 

@@ -80,7 +80,12 @@ class BetclicExtractorGUI:
 
         self.is_running = False
         self.context_is_running = False
+        # One extraction = three explicit, independent products:
+        # the internal machine packet (Context Engine input only), the clean
+        # odds package (KOPIUJ PAKIET) and the match context built from it.
         self.current_packet = ""
+        self.current_odds_package = ""
+        self.current_match_context = ""
 
     # ------------------------------------------------------------------ styles
 
@@ -289,6 +294,8 @@ class BetclicExtractorGUI:
         self.val_odds.config(text="0")
         self.val_unresolved.config(text="0")
         self.current_packet = ""
+        self.current_odds_package = ""
+        self.current_match_context = ""
         self.btn_context.config(state="disabled")
         self.lbl_context_status.config(text="CONTEXT: WAITING", foreground="#8b92a5")
         self.txt_preview.delete("1.0", tk.END)
@@ -389,11 +396,13 @@ class BetclicExtractorGUI:
         # The internal packet stays in memory for the Context Engine only; the
         # preview and the copy button always carry the clean LLM odds text.
         self.current_packet = packet_text
+        self.current_odds_package = llm_packet_text
+        self.current_match_context = ""
         self.txt_preview.delete("1.0", tk.END)
         self.txt_preview.insert("1.0", llm_packet_text)
 
     def copy_packet(self) -> None:
-        content = self.txt_preview.get("1.0", tk.END).strip()
+        content = self.current_odds_package.strip()
         if not content:
             messagebox.showinfo("Brak danych", "Brak pakietu do skopiowania.")
             return
@@ -426,19 +435,25 @@ class BetclicExtractorGUI:
         module_root = Path(__file__).resolve().parent
         output_dir = BASE_DIR / "context_outputs"
         result = run_context_engine(packet_text, module_root, output_dir, timeout_seconds=30.0)
-        self.root.after(0, lambda: self._on_context_done(result))
+        self.root.after(0, lambda: self._on_context_done(result, packet_text))
 
-    def _on_context_done(self, result: ContextRunResult) -> None:
+    def _on_context_done(self, result: ContextRunResult, source_packet: str | None = None) -> None:
         self.context_is_running = False
+        if source_packet is not None and source_packet != self.current_packet:
+            # Built for a previous extraction (a new match was loaded meanwhile):
+            # never copy or show another match's context.
+            self._refresh_context_button()
+            return
         if result.status in {"PASS", "PASS_WITH_QUARANTINE"} and result.json_path and result.text_path and result.text_path.is_file():
             self.lbl_context_status.config(text=f"CONTEXT: {result.status}", foreground=self.accent_green)
             report_text = result.text_path.read_text(encoding="utf-8")
+            self.current_match_context = report_text
             self.root.clipboard_clear()
             self.root.clipboard_append(report_text)
             self.root.update()
             try:
                 os.startfile(result.text_path)
-            except OSError:
+            except (OSError, AttributeError):  # AttributeError: not on Windows
                 pass
             messagebox.showinfo(
                 f"Context Engine — {result.status}",

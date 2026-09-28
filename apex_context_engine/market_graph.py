@@ -35,6 +35,24 @@ def _named_player(value: str) -> bool:
     )
 
 
+_NOT_A_PLAYER = {"yes", "no", "tak", "nie", "none", "brak", "remis", "draw", "home", "away",
+                 "over", "under", "powyzej", "ponizej", "nikt", "zaden", "inny", "other", "gol", "gole"}
+
+
+def _single_name_player(record: OddRecord) -> bool:
+    """A one-word player name (Raphinha, Rodri) proven by its own row.
+
+    Accepted only when the explicit row-local participant and the selection are
+    the same single name, that name is printed on the priced button and it is
+    neither a reserved outcome word nor an event team.
+    """
+    word = _semantic_text(record.selection)
+    return (bool(re.fullmatch(r"[a-z]{3,}(?:[-'][a-z]+)*", word)) and word not in _NOT_A_PLAYER
+            and _same_semantic_text(record.selection, record.participant)
+            and word in _semantic_text(record.raw).split()
+            and not any(_same_semantic_text(record.selection, team) for team in record.event_teams))
+
+
 def _expected_scorer_scope(record: OddRecord) -> str:
     market = _semantic_text(record.market)
     if "pierwsz" in market and ("strzelec" in market or "scorer" in market):
@@ -51,7 +69,8 @@ def _scorer_safety_reason(record: OddRecord) -> str:
     team, one scope and a binary scorer settlement; it does not model or price
     the player market.
     """
-    if not _named_player(record.selection) or not _named_player(record.participant):
+    if not (_named_player(record.selection) and _named_player(record.participant)) \
+            and not _single_name_player(record):
         return "SCORER_PLAYER_IDENTITY_MISSING"
     if not _same_semantic_text(record.selection, record.participant):
         return "SCORER_PLAYER_IDENTITY_CONFLICT"
@@ -324,13 +343,15 @@ def _captured_player_contract(record: OddRecord) -> str | None:
     if not record.source_raw_record_ids or not record.market_instance or len(record.event_teams) != 2:
         return None
     from parser import (parse_market_record, _player_goal_combination_contract,
-                        _goal_assist_combination_mode, _pure_assist_combination_mode)
+                        _goal_assist_combination_mode, _pure_assist_combination_mode,
+                        _is_scorer_assister_regular_time_title)
     title = _semantic_text(record.market)
     known = title in {"strzelcy", "strzelec", "strzelec gola lub jego zmiennik",
                       "strzelec i jego zmiennik", "zawodnik lub jego zmiennik strzeli gola (90 min)"}
     known = known or bool(_player_goal_combination_contract(record.market)
                           or _goal_assist_combination_mode(record.market)
-                          or _pure_assist_combination_mode(record.market))
+                          or _pure_assist_combination_mode(record.market)
+                          or _is_scorer_assister_regular_time_title(record.market))
     if not known:
         return None
     if record.owner and not any(_same_semantic_text(record.owner,t) for t in record.event_teams):

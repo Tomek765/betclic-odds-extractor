@@ -335,6 +335,7 @@ def _is_audited_event_total_title(market_title: str, home_team: str,
         "liczba odbiorow (opta) (z dogrywka)",
         "liczba spalonych w meczu (opta)",
         "1. polowa - rzuty rozne", "liczba kartek 1. polowa",
+        "suma rzutow roznych (razem z dogrywka)",
         "punkty za kartki powyzej/ponizej",
         "punkty za kartki powyzej/ponizej - 1. polowa",
     }:
@@ -347,6 +348,7 @@ def _is_audited_event_total_title(market_title: str, home_team: str,
             f"liczba odbiorow (opta) (z dogrywka) - {team}",
             f"liczba spalonych w meczu - {team} (opta)",
             f"rzuty rozne (bez dogrywki) - {team}",
+            f"rzuty rozne {team} (razem z dogrywka)",
             f"kartki - {team}",
         }:
             return True
@@ -1265,7 +1267,8 @@ def _classify_selection_side(selection: str, home_team: str, away_team: str) -> 
     return ""
 
 
-def _classify_double_chance_selection(selection: str, home_team: str, away_team: str) -> str:
+def _classify_double_chance_selection(selection: str, home_team: str, away_team: str,
+                                      native_team_names: dict | None = None) -> str:
     """Map literal or fully labelled double-chance pairs before team aliasing."""
     semantic = _semantic_text(selection)
     literal = re.sub(r"\s+", "", semantic).upper()
@@ -1288,6 +1291,13 @@ def _classify_double_chance_selection(selection: str, home_team: str, away_team:
             sides.add("DRAW")
         elif component in {"2", "away", "gosc", "goscie"} or (away and component == away):
             sides.add("AWAY")
+        else:
+            # Betclic labels double chance with the page's native short names
+            # (Juventude RS -> "Juventude").  Resolve a whole component with the
+            # same event-scoped evidence as half/full components, never fuzzily.
+            side = _classify_half_full_component(component, home_team, away_team, native_team_names)
+            if side:
+                sides.add(side)
 
     return {
         frozenset({"HOME", "DRAW"}): "1X",
@@ -1726,7 +1736,7 @@ def parse_market_record(
             selection = condition.upper().replace(" ", "_")
 
     elif family == "DOUBLE_CHANCE":
-        double_chance = _classify_double_chance_selection(raw_selection, home_team, away_team)
+        double_chance = _classify_double_chance_selection(raw_selection, home_team, away_team, native_team_names)
         if double_chance:
             selection = double_chance
 

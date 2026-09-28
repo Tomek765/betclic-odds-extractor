@@ -253,6 +253,33 @@ def _safe_equivalence_keys(record: OddRecord) -> list[tuple[str, str]]:
     return keys
 
 
+PRICE_CONTRADICTION_RATIO = 0.50
+
+
+def equivalence_price_contradictions(records: Iterable[OddRecord]) -> list[dict]:
+    """Proved-equivalence groups whose prices contradict a common settlement."""
+    grouped: dict[tuple[str, str], list[OddRecord]] = defaultdict(list)
+    for record in records:
+        if record.family in {"GOALSCORER", "PLAYER_COMBINATION"}:
+            continue
+        if (record.canonical_outcome or "").startswith("COMPOUND_RAW="):
+            continue
+        for key, rule in _safe_equivalence_keys(record):
+            if rule != "EXACT_DUPLICATE_FULL_SEMANTIC_SIGNATURE":
+                grouped[(key, rule)].append(record)
+    rows = []
+    for signature, rule in sorted(grouped):
+        items = grouped[(signature, rule)]
+        high, low = max(x.odds for x in items), min(x.odds for x in items)
+        if low > 0 and high / low - 1.0 > PRICE_CONTRADICTION_RATIO:
+            rows.append({
+                "signature": signature, "allowlist_rule": rule,
+                "price_ratio": round(high / low, 6),
+                "markets": sorted({(x.market, x.category, x.odds) for x in items}),
+            })
+    return rows
+
+
 def best_price_alerts(records: Iterable[OddRecord], min_gain_percent: float = 0.01) -> list[dict]:
     grouped: dict[tuple[str, str], list[OddRecord]] = defaultdict(list)
     for record in records:
@@ -278,10 +305,12 @@ def best_price_alerts(records: Iterable[OddRecord], min_gain_percent: float = 0.
         worse = [x for x in ordered[1:] if x.odds < best.odds]
         if not worse:
             continue
-        # A >50% jump is a collision for a duplicate-only signature.  An
-        # independently proved mathematical equivalence has already established
-        # the common settlement, so it remains an auditable price comparison.
-        if rule == "EXACT_DUPLICATE_FULL_SEMANTIC_SIGNATURE" and any((best.odds / item.odds - 1.0) > 0.50 for item in worse):
+        # A >50% jump inside one bookmaker's book cannot be a price difference
+        # for the same settlement: it proves that one side was classified
+        # wrongly (live 2026-09-28: an interval "Wynik" 7.75 read as the FT
+        # result 3.73).  Such groups are never offered as better prices;
+        # equivalence_price_contradictions() reports them explicitly.
+        if any((best.odds / item.odds - 1.0) > PRICE_CONTRADICTION_RATIO for item in worse):
             continue
         copies = []
         for item in worse:

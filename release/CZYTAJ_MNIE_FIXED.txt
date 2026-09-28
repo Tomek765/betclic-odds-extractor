@@ -1,4 +1,4 @@
-APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20260928_CONTEXT)
+APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20260928_LIVE)
 
 INSTALACJA (Windows 10/11 x64)
 1. Rozpakuj caly ZIP (np. do Pobrane).
@@ -8,7 +8,7 @@ INSTALACJA (Windows 10/11 x64)
      %LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
    - na pulpicie pojawi sie skrot "APEX Context Engine - FIXED"
    - program uruchomi sie z tego skrotu, a instalator sprawdzi, ze dziala
-     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20260928_CONTEXT)
+     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20260928_LIVE)
    - wynik zapisuje sie w INSTALL_REPORT.txt w folderze programu
 4. Jesli Windows SmartScreen pokaze "System Windows ochronil ten komputer",
    wybierz "Wiecej informacji" -> "Uruchom mimo to" (plik nie jest podpisany).
@@ -26,8 +26,21 @@ Kliknij dwukrotnie TEST_NA_ZYWO.cmd (w rozpakowanym folderze albo w folderze
 programu), wklej link do meczu przed rozpoczeciem i poczekaj 1-3 minuty.
 Wynik PASS oznacza: ekstrakcja poprawna, pakiet kursow i kontekst to dwa
 rozne, czyste produkty; lista kwarantanny podaje etap i przyczyne.
+PASS Z OSTRZEZENIAMI oznacza: program dziala poprawnie, a kilka ofert bez
+rozpoznanej semantyki (np. nowe karty Top) jest jawnie w kwarantannie z
+podana przyczyna. FAIL oznacza brak strukturalny (niezaladowana zakladka,
+nierozliczone kursy, brudny lub zly produkt).
 
 CO NAPRAWIONO
+- (test na zywo Szwecja - Polska) Rynek z samym tytulem "Wynik" (kursy
+  5.00 / 1.30 / 7.75 - wynik przedzialu czasowego) nie jest juz brany za
+  wynik calego meczu. Bez jawnego okresu trafia do kwarantanny
+  UNCONFIRMED_MARKET_PERIOD; okna minutowe (np. 0-15 min) nigdy nie
+  staja sie pelnym meczem. Znikaja falszywe alerty "lepsza cena" (+159%).
+- Roznica ceny >50% przy tym samym rozliczeniu jest raportowana jako
+  PRICE_CONTRADICTIONS (sprzecznosc), nigdy jako lepsza cena.
+- Karty Top "Powyzej/Ponizej X,5 rzutow roznych w meczu" i "Remis po
+  pierwszej polowie meczu" sa rozpoznawane.
 - "ZBUDUJ KONTEKST RYNKU" kopiuje prawdziwy kontekst meczu (fair 1X2,
   oczekiwane gole, najbardziej prawdopodobne wyniki, rynki fair, dyscyplina
   linii, jakosc danych), a nie drugi raz pakiet kursow.

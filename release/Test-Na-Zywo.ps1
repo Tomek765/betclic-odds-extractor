@@ -41,7 +41,15 @@ if ($r.PSObject.Properties.Name -contains "quarantine_summary" -and $r.quarantin
     $r.quarantine_summary.PSObject.Properties | ForEach-Object { Write-Host ("  {0} = {1}" -f $_.Name, $_.Value) }
 }
 Write-Host ""
-if ($r.passed) { Write-Host "WYNIK: PASS" -ForegroundColor Green } else { Write-Host "WYNIK: FAIL (szczegoly w SELF_TEST_RESULT.json)" -ForegroundColor Red }
+$verdict = if ($r.PSObject.Properties.Name -contains "verdict") { $r.verdict } elseif ($r.passed) { "PASS" } else { "FAIL" }
+if ($r.PSObject.Properties.Name -contains "structural_incomplete_reasons" -and $r.structural_incomplete_reasons) {
+    Show "BRAKI STRUKTURALNE" ($r.structural_incomplete_reasons -join ", ")
+}
+switch ($verdict) {
+    "PASS" { Write-Host "WYNIK: PASS" -ForegroundColor Green }
+    "PASS_WITH_WARNINGS" { Write-Host "WYNIK: PASS Z OSTRZEZENIAMI (program dziala; $($r.unresolved_count) ofert bez rozpoznanej semantyki jest jawnie w kwarantannie)" -ForegroundColor Yellow }
+    default { Write-Host "WYNIK: FAIL (szczegoly w SELF_TEST_RESULT.json)" -ForegroundColor Red }
+}
 Write-Host "Pliki: APEX_ODDS_PACKAGE.txt (pakiet), APEX_CONTEXT_REPORT.txt (kontekst), APEX_QUARANTINE_DIAGNOSTICS.json"
 Start-Process explorer.exe $Out
 Read-Host "Nacisnij Enter, aby zamknac"

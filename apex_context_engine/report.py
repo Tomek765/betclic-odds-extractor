@@ -176,6 +176,11 @@ def render_match_context(context: ContextPacket) -> str:
     lines += ["", "[DATA_QUALITY]",
               f"QUARANTINED_BETS={sum(excluded.values())}" + (" (" + ", ".join(f"{k} {v}" for k, v in sorted(excluded.items())) + ")" if excluded else ""),
               f"NOT_MODELED_BETS={sum(not_modeled.values())}" + (" (" + ", ".join(f"{k} {v}" for k, v in sorted(not_modeled.items())) + ")" if not_modeled else "")]
+    contradictions = [row["evidence"] for row in data["anomalies"] if row.get("type") == "EQUIVALENCE_PRICE_CONTRADICTION"]
+    if contradictions:
+        lines.append(f"PRICE_CONTRADICTIONS={len(contradictions)} (same settlement priced >50% apart; not offered as better price)")
+        for row in contradictions:
+            lines.append("CONTRADICTION " + " vs ".join(f"{market} {odds}" for market, _category, odds in row["markets"]))
     return "\n".join(lines) + "\n"
 
 

@@ -111,6 +111,13 @@ def recover_headerless_top_offer(selection: str, tab_name: str,
     substitute = re.fullmatch(r"(.+?) lub jego zmiennik strzeli gola w meczu", source, re.IGNORECASE)
     if substitute and named_person(substitute.group(1)):
         return {"market_title": "Strzelec gola lub jego zmiennik", "raw_selection": substitute.group(1)}
+    # Observed live 2026-09-28 (Szwecja - Polska Top cards).
+    corners_total = re.fullmatch(r"(Powyżej|Poniżej) (\d+[.,]5) rzutów rożnych w meczu", source, re.IGNORECASE)
+    if corners_total:
+        return {"market_title": "Rzuty rożne",
+                "raw_selection": f"{corners_total.group(1)} {corners_total.group(2)}"}
+    if re.fullmatch(r"Remis po pierwszej połowie meczu", source, re.IGNORECASE):
+        return {"market_title": "Wynik meczu - 1. połowa", "raw_selection": "Remis"}
     corners = re.fullmatch(r"Więcej rzutów rożnych w meczu - (.+)", source, re.IGNORECASE)
     if corners and exact_team(corners.group(1)):
         return {"market_title": "Więcej rzutów rożnych", "raw_selection": corners.group(1)}
@@ -1078,6 +1085,16 @@ def _period_text(value: str) -> str:
     return " ".join(unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode().lower().split())
 
 
+_GENERIC_RESULT_TITLES = frozenset({"wynik", "1x2", "wynik 1x2"})
+_TIME_WINDOW_EVIDENCE = re.compile(
+    r"\b\d{1,2}[:.]\d{2}\s*[-–]\s*\d{1,2}[:.]\d{2}\b"
+    r"|\b\d{1,3}\s*(?:[-–]|do)\s*\d{1,3}\.?\s*(?:min\b|minut|')"
+    r"|\b(?:pierwsz\w*|ostatni\w*)\s+\d{1,2}\s*minut"
+    r"|\b\d{1,2}\.?\s*minut"
+    r"|\bprzedzia\w*\s+czasow"
+)
+
+
 def classify_period_detail(market_title: str, section_title: str, period_hint: str = "",
                            ancestor_title: str = "", main_tab: str = "",
                            family: str = "") -> tuple[str, str, str]:
@@ -1121,6 +1138,11 @@ def classify_period_detail(market_title: str, section_title: str, period_hint: s
             if source == "MARKET_TITLE" and extra_statistic and "w meczu" in value:
                 return "MATCH_INCLUDING_EXTRA_TIME", "BETCLIC_PL_STATISTICS_RULE_20260905", "HIGH"
             return "FULL_TIME", source, "MEDIUM"
+        # A minute window (e.g. "0-15 min", "00:00 - 14:59", "10 minut") is
+        # explicit evidence of a sub-match interval.  It must never fall
+        # through to the canonical full-time default below.
+        if _TIME_WINDOW_EVIDENCE.search(value) or _TIME_WINDOW_EVIDENCE.search(str(text or "").casefold()):
+            return "UNKNOWN", f"UNSUPPORTED_TIME_WINDOW:{source}", "LOW"
     if extra_statistic:
         return "MATCH_INCLUDING_EXTRA_TIME", "BETCLIC_PL_STATISTICS_RULE_20260905", "HIGH"
     regular_titles = {
@@ -1146,6 +1168,13 @@ def classify_period_detail(market_title: str, section_title: str, period_hint: s
                     "GOAL_MARGIN", "TEAM_SCORES_BOTH_HALVES", "TEAM_WINS_ONE_HALF", "TEAM_WINS_BOTH_HALVES",
                     "FIRST_GOAL_TIME", "QUALIFICATION_WINNER", "QUALIFICATION_METHOD", "BINARY_EVENT",
                     "EVENT_FIRST_LAST", "EVENT_RANGE", "EVENT_PARITY", "EVENT_EXACT", "EVENT_RESULT"}
+    # A bare "Wynik" states neither period nor scope.  Betclic's full-match
+    # result is titled "Wynik meczu (...)"; a bare "Wynik" was observed live
+    # (2026-09-28, Szwecja - Polska: 5.00/1.30/7.75 beside the real FT 1X2
+    # 1.93/3.78/3.73) on an interval market.  Without explicit period
+    # evidence it stays unresolved instead of defaulting to FULL_TIME.
+    if family == "1X2" and title in _GENERIC_RESULT_TITLES:
+        return "UNKNOWN", "GENERIC_RESULT_TITLE_WITHOUT_PERIOD", "LOW"
     if family in canonical_ft:
         return "FULL_TIME", "CANONICAL_MARKET", "MEDIUM"
     # Versioned title ontology for explicit, full-match settlement offers.  This

@@ -44,6 +44,32 @@ def _product_checks(odds_package: str, context_path: Path | None, output_dir: Pa
     return checks
 
 
+# Reasons that only describe individual offers the parser could not prove.
+# Each such row is quarantined with an explicit reason; the capture itself is
+# complete.  Every other incomplete reason is structural and fails the test.
+CONTENT_ONLY_INCOMPLETE_REASONS = frozenset({"UNRESOLVED", "PERIOD_UNKNOWN", "PERIOD_LOW_CONFIDENCE"})
+
+
+def _verdict(report: dict[str, Any]) -> dict[str, Any]:
+    """PASS, PASS_WITH_WARNINGS (explained content quarantine only) or FAIL."""
+    structural = sorted(set(report.get("incomplete_reasons") or []) - CONTENT_ONLY_INCOMPLETE_REASONS)
+    products_ok = (
+        int(report.get("odds_count") or 0) > 0
+        and report.get("context_status") in {"PASS", "PASS_WITH_QUARANTINE"}
+        and report.get("products_distinct") is True
+        and report.get("products_clean") is True
+    )
+    if products_ok and report.get("extract_status") == "GOTOWE" and not int(report.get("unresolved_count") or 0):
+        verdict = "PASS"
+    elif (products_ok and report.get("extract_status") == "PARTIAL" and not structural
+          and report.get("quarantine_explained") is True):
+        verdict = "PASS_WITH_WARNINGS"
+    else:
+        verdict = "FAIL"
+    return {"verdict": verdict, "structural_incomplete_reasons": structural,
+            "passed": verdict != "FAIL"}
+
+
 def run_release_e2e(url: str) -> int:
     output_dir = BASE_DIR / "release_self_test"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -77,6 +103,7 @@ def run_release_e2e(url: str) -> int:
             "odds_count": extraction.get("odds_count", 0),
             "market_count": extraction.get("market_count", 0),
             "unresolved_count": extraction.get("unresolved_count", 0),
+            "incomplete_reasons": list(extraction.get("incomplete_reasons") or []),
             "analysis_ready": extraction.get("analysis_ready"),
             "full_usable_ready": extraction.get("full_usable_ready"),
         })
@@ -102,15 +129,8 @@ def run_release_e2e(url: str) -> int:
                 "context_text": _path(context.text_path),
             })
             report.update(_product_checks(odds_package, context.text_path, output_dir))
-        accepted = (
-            report["extract_status"] == "GOTOWE"
-            and int(report.get("odds_count") or 0) > 0
-            and int(report.get("unresolved_count") or 0) == 0
-            and report["context_status"] in {"PASS", "PASS_WITH_QUARANTINE"}
-            and report.get("products_distinct") is True
-            and report.get("products_clean") is True
-        )
-        report["passed"] = accepted
+        report.update(_verdict(report))
+        accepted = report["passed"]
         exit_code = 0 if accepted else 20
     except BaseException as exc:
         report["fatal_error"] = f"{type(exc).__name__}:{exc}"

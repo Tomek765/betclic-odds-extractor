@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 
 from .models import FairMarket, ParsedPacket
-from .market_graph import _market_domain
+from .market_graph import _market_domain, equivalence_price_contradictions
 
 
 def line_policy(record, header):
@@ -36,6 +36,8 @@ def detect_anomalies(packet: ParsedPacket, fair_markets: list[FairMarket], scrip
     anomalies: list[dict] = []
     for alert in alerts:
         anomalies.append({"type": "IDENTICAL_SETTLEMENT_BETTER_PRICE", "severity": "MEDIUM", "evidence": alert})
+    for contradiction in equivalence_price_contradictions(packet.odds):
+        anomalies.append({"type": "EQUIVALENCE_PRICE_CONTRADICTION", "severity": "HIGH", "evidence": contradiction})
     if "TOTAL_VS_TEAM_TOTAL_LAMBDA_TENSION" in script.get("warnings", []):
         anomalies.append({"type": "TOTAL_VS_TEAM_TOTALS_TENSION", "severity": "MEDIUM", "evidence": {"lambda_total": script.get("lambda_total"), "lambda_total_from_match_market": script.get("lambda_total_from_match_market"), "sources": script.get("sources", [])}})
     for rejected in equivalence_audit.get("rejected_groups", []):

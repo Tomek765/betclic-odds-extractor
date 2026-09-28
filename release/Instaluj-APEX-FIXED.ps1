@@ -13,7 +13,7 @@ Set-StrictMode -Version 3
 $ErrorActionPreference = "Stop"
 
 $ReleaseName  = "APEX_Context_Engine_FIXED_2026-09-27"
-$BuildId      = "APEX_CONTEXT_ENGINE_FIXED_20260928_CONTEXT"
+$BuildId      = "APEX_CONTEXT_ENGINE_FIXED_20260928_LIVE"
 $BuildFamily  = "APEX_CONTEXT_ENGINE_FIXED_"
 $ShortcutName = "APEX Context Engine - FIXED"
 $Source  = $PSScriptRoot

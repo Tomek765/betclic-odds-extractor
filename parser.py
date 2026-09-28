@@ -121,6 +121,9 @@ def recover_headerless_top_offer(selection: str, tab_name: str,
     corners = re.fullmatch(r"Więcej rzutów rożnych w meczu - (.+)", source, re.IGNORECASE)
     if corners and exact_team(corners.group(1)):
         return {"market_title": "Więcej rzutów rożnych", "raw_selection": corners.group(1)}
+    cards = re.fullmatch(r"Więcej kartek w meczu - (.+)", source, re.IGNORECASE)
+    if cards and exact_team(cards.group(1)):
+        return {"market_title": "Więcej kartek", "raw_selection": cards.group(1)}
     margin = re.fullmatch(r"(.+?) wygra przewagą dokładnie ([1-9]\d*) gol(?:a|i)", source, re.IGNORECASE)
     if margin and exact_team(margin.group(1)):
         return {"market_title": "Różnica goli", "raw_selection": source}

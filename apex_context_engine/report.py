@@ -164,11 +164,16 @@ def render_match_context(context: ContextPacket) -> str:
 
     if data["best_price_alerts"]:
         lines += ["", "[BETTER_PRICE_SAME_SETTLEMENT]"]
+        seen_lines: set[str] = set()
         for alert in data["best_price_alerts"]:
             best = alert.get("best") or {}
             for copy in alert.get("worse_copies", []):
-                lines.append(f"{best.get('market')} {best.get('odds')} vs {copy.get('market')} {copy.get('odds')} "
-                             f"(+{float(copy.get('gain_percent', 0)):.1f}%)")
+                # The same offer shown on two tabs renders identically; list it once.
+                line = (f"{best.get('market')} {best.get('odds')} vs {copy.get('market')} {copy.get('odds')} "
+                        f"(+{float(copy.get('gain_percent', 0)):.1f}%)")
+                if line not in seen_lines:
+                    seen_lines.add(line)
+                    lines.append(line)
 
     diagnostics = quarantine_diagnostics(context)
     excluded = Counter(row["reason_code"] for row in diagnostics if row["quarantine"])

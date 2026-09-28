@@ -86,9 +86,21 @@ class PriceContradictionIsNotABetterPrice(unittest.TestCase):
         self.assertIn("EQUIVALENCE_PRICE_CONTRADICTION", {a["type"] for a in context.anomalies})
         report = render_match_context(context)
         self.assertIn("PRICE_CONTRADICTIONS=2", report)
+        body = report.split("[BETTER_PRICE_SAME_SETTLEMENT]", 1)[-1].split("[DATA_QUALITY]", 1)[0]
+        rows = [line for line in body.splitlines() if line.strip()]
+        self.assertEqual(len(rows), len(set(rows)))
         better = report.split("[BETTER_PRICE_SAME_SETTLEMENT]", 1)[-1].split("[DATA_QUALITY]", 1)[0]
         self.assertNotIn("Wynik 7.75 vs", better)
         self.assertNotIn("Wynik 5.0 vs", better)
+
+    def test_same_offer_on_two_tabs_is_listed_once(self):
+        rows = [odd(MARKET="Wynik meczu (z wyłączeniem dogrywki)", SELECTION="AWAY", OWNER=AWAY, ODDS="3.90", RAW="x 3.90")]
+        rows += [odd(MARKET="Handicap (2-drożny)", CATEGORY=tab, FAMILY="HANDICAP_EUROPEAN", HANDICAP_KIND="TWO_WAY",
+                     SELECTION="AWAY", OWNER=AWAY, LINE="-0.5", SETTLEMENT="NO_PUSH", ODDS="3.73", RAW="x 3.73")
+                 for tab in ("Wynik", "Top")]
+        report = render_match_context(build_context(parse_packet_text(with_odds(*rows))))
+        body = report.split("[BETTER_PRICE_SAME_SETTLEMENT]", 1)[1].split("[DATA_QUALITY]", 1)[0]
+        self.assertEqual(body.count("vs Handicap (2-drożny) 3.73"), 1)
 
     def test_ordinary_price_differences_still_alert(self):
         rows = [odd(MARKET="Wynik meczu (z wyłączeniem dogrywki)", SELECTION="AWAY", OWNER=AWAY, ODDS="3.73", RAW="x 3.73"),
@@ -107,6 +119,19 @@ class LiveHeaderlessTopCards(unittest.TestCase):
         draw = recover_headerless_top_offer("Remis po pierwszej połowie meczu", "Top", TOP_INSTANCE, HOME, AWAY)
         record = parse(draw["market_title"], draw["raw_selection"], "2.38", category="Top")
         self.assertEqual((record["FAMILY"], record["PERIOD"], record["SELECTION"]), ("1X2", "1ST_HALF", "DRAW"))
+
+    def test_turcja_wlochy_more_cards_card_recovers(self):
+        home, away = "Turcja", "Włochy"
+        cards = recover_headerless_top_offer("Więcej kartek w meczu - Turcja", "Top", TOP_INSTANCE, home, away)
+        record, _ = parse_market_record(
+            category="Top", market_title=cards["market_title"], raw_selection=cards["raw_selection"],
+            odds_str="2.28", raw_text="Więcej kartek w meczu - Turcja 2.28", section_title="",
+            home_team=home, away_team=away, container_id="c")
+        self.assertEqual((record["PERIOD"], record["SELECTION"], record["OWNER"]), ("FULL_TIME", "HOME", home))
+        self.assertEqual(_semantic_quarantine_reason(record), "")
+        self.assertIsNone(recover_headerless_top_offer("Więcej kartek w meczu - Hiszpania", "Top", TOP_INSTANCE, home, away))
+        for text in ("Francesco Esposito lub Arda Guler strzeli gola", "Gol w przedziale czasu Przerwa - 59:59"):
+            self.assertIsNone(recover_headerless_top_offer(text, "Top", TOP_INSTANCE, home, away), text)
 
     def test_unproven_rows_stay_unresolved(self):
         for text in ("Mateusz Żukowski lub jego zmiennik powyżej 1,5 strzałów na bramkę",

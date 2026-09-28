@@ -341,6 +341,20 @@ class H_RealQuarantine(unittest.TestCase):
         self.assertNotIn("run_7:42", report)  # explanations stay internal
 
 
+class ReleaseSelfTestProductChecks(unittest.TestCase):
+    def test_live_self_test_proves_distinct_clean_products(self):
+        from release_self_test import _product_checks
+        with tempfile.TemporaryDirectory() as tmp:
+            engine = build_context(parse_packet_text(A["internal"]))
+            _, text_path = write_outputs(engine, tmp)
+            good = _product_checks(A["package"], text_path, Path(tmp))
+            text_path.write_text(A["package"], encoding="utf-8")        # the old regression
+            same = _product_checks(A["package"], text_path, Path(tmp))
+        self.assertTrue(good["products_distinct"] and good["products_clean"] and good["quarantine_explained"])
+        self.assertIn("QUARANTINE:EXTRACTOR_SEMANTIC:UNCONFIRMED_XTRA_PAYOUT_CONTRACT", good["quarantine_summary"])
+        self.assertFalse(same["products_distinct"])
+
+
 class BrowserSnapshotEndToEnd(unittest.TestCase):
     """Playwright/Chromium over real saved Betclic pages -> both products."""
 

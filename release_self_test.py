@@ -16,6 +16,34 @@ def _path(value: Path | None) -> str | None:
     return str(value.resolve()) if value is not None else None
 
 
+_JUNK = ("MARKET_INSTANCE_ID", "SOURCE_RAW_RECORD_IDS", "RUNTIME_", "SHA256", "BUILD_ID", "app-desktop[",
+         "marketBox_", "record_mappings", "QUARANTINED_RECORDS", "UPSTREAM_EXCLUSIONS", "WARNING_DISPOSITIONS")
+
+
+def _product_checks(odds_package: str, context_path: Path | None, output_dir: Path) -> dict[str, Any]:
+    """Prove the two copied products are different and free of technical data."""
+    context_text = context_path.read_text(encoding="utf-8") if context_path and context_path.is_file() else ""
+    odds_header = "FAMILY|MARKET|PERIOD|OWNER|SELECTION|LINE|ODDS|SETTLEMENT"
+    checks: dict[str, Any] = {
+        "odds_package_bytes": len(odds_package.encode("utf-8")),
+        "context_bytes": len(context_text.encode("utf-8")),
+        "products_distinct": bool(odds_package and context_text and odds_package != context_text
+                                  and odds_header in odds_package and odds_header not in context_text
+                                  and context_text.startswith("APEX_MATCH_CONTEXT")),
+        "products_clean": not any(token in odds_package or token in context_text for token in _JUNK),
+    }
+    diagnostics_path = output_dir / "APEX_QUARANTINE_DIAGNOSTICS.json"
+    if diagnostics_path.is_file():
+        rows = json.loads(diagnostics_path.read_text(encoding="utf-8"))
+        summary: dict[str, int] = {}
+        for row in rows:
+            key = f"{row['disposition']}:{row['source_stage']}:{row['reason_code']}"
+            summary[key] = summary.get(key, 0) + 1
+        checks["quarantine_summary"] = dict(sorted(summary.items()))
+        checks["quarantine_explained"] = all(row.get("reason_code") and row.get("source_stage") for row in rows)
+    return checks
+
+
 def run_release_e2e(url: str) -> int:
     output_dir = BASE_DIR / "release_self_test"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -55,6 +83,10 @@ def run_release_e2e(url: str) -> int:
         if packet_text:
             source_packet = output_dir / "APEX_SOURCE_PACKET.txt"
             source_packet.write_text(packet_text, encoding="utf-8", newline="\n")
+            # The two user products, exactly as the copy buttons deliver them.
+            odds_package = extraction.get("llm_packet_text", "")
+            package_path = output_dir / "APEX_ODDS_PACKAGE.txt"
+            package_path.write_text(odds_package, encoding="utf-8", newline="\n")
             context = run_context_engine(
                 packet_text,
                 Path(__file__).resolve().parent,
@@ -65,14 +97,18 @@ def run_release_e2e(url: str) -> int:
                 "context_status": context.status,
                 "context_reason": context.reason,
                 "source_packet": _path(source_packet),
+                "odds_package": _path(package_path),
                 "context_json": _path(context.json_path),
                 "context_text": _path(context.text_path),
             })
+            report.update(_product_checks(odds_package, context.text_path, output_dir))
         accepted = (
             report["extract_status"] == "GOTOWE"
             and int(report.get("odds_count") or 0) > 0
             and int(report.get("unresolved_count") or 0) == 0
             and report["context_status"] in {"PASS", "PASS_WITH_QUARANTINE"}
+            and report.get("products_distinct") is True
+            and report.get("products_clean") is True
         )
         report["passed"] = accepted
         exit_code = 0 if accepted else 20

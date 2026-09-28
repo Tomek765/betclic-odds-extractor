@@ -1,4 +1,4 @@
-APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20260927_CLEAN)
+APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20260928_CONTEXT)
 
 INSTALACJA (Windows 10/11 x64)
 1. Rozpakuj caly ZIP (np. do Pobrane).
@@ -8,7 +8,7 @@ INSTALACJA (Windows 10/11 x64)
      %LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
    - na pulpicie pojawi sie skrot "APEX Context Engine - FIXED"
    - program uruchomi sie z tego skrotu, a instalator sprawdzi, ze dziala
-     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20260927_CLEAN)
+     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20260928_CONTEXT)
    - wynik zapisuje sie w INSTALL_REPORT.txt w folderze programu
 4. Jesli Windows SmartScreen pokaze "System Windows ochronil ten komputer",
    wybierz "Wiecej informacji" -> "Uruchom mimo to" (plik nie jest podpisany).
@@ -21,7 +21,20 @@ Nie jest zmieniana ani usuwana. Stary skrot "APEX Context Engine" nadal
 uruchamia poprzedni program. Oba programy zapisuja wyniki w
 %LOCALAPPDATA%\APEX Context Engine (kazdy przebieg w osobnych plikach).
 
+TEST NA ZYWO
+Kliknij dwukrotnie TEST_NA_ZYWO.cmd (w rozpakowanym folderze albo w folderze
+programu), wklej link do meczu przed rozpoczeciem i poczekaj 1-3 minuty.
+Wynik PASS oznacza: ekstrakcja poprawna, pakiet kursow i kontekst to dwa
+rozne, czyste produkty; lista kwarantanny podaje etap i przyczyne.
+
 CO NAPRAWIONO
+- "ZBUDUJ KONTEKST RYNKU" kopiuje prawdziwy kontekst meczu (fair 1X2,
+  oczekiwane gole, najbardziej prawdopodobne wyniki, rynki fair, dyscyplina
+  linii, jakosc danych), a nie drugi raz pakiet kursow.
+- Usunieto falszywe kwarantanny: podwojna szansa ze skrotem nazwy druzyny,
+  rzuty rozne "(razem z dogrywka)", zawodnicy z jednym nazwiskiem (np.
+  Raphinha), rynek strzelec + asystujacy, rynki z dogrywka/karnymi/awansem
+  (teraz oznaczone jako poza modelem, nie kwarantanna).
 - Podglad, przycisk KOPIUJ PAKIET i raport kontekstu zawieraja tylko czyste
   kursy (MATCH/COMPETITION/KICKOFF + jeden wiersz na zaklad), bez
   identyfikatorow, sciezek DOM i danych technicznych. Kopiujesz i wklejasz

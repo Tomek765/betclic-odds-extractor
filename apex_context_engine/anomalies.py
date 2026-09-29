@@ -11,8 +11,12 @@ def line_policy(record, header):
     sport = header.get("SPORT", "FOOTBALL").upper()
     metric = _market_domain(record).removeprefix("STATISTICS:")
     scope = "PLAYER" if record.participant or record.family == "PLAYER_PROP" else "TEAM" if record.owner else "MATCH"
+    # "Punkty za kartki" is a booking-points scale (yellow 10, red 25), not a
+    # card count, so its lines are ~10x larger than any card-count line.
+    if metric == "CARDS" and "punkty za kartki" in record.market.casefold():
+        metric = "CARD_POINTS"
     ceilings = {"SHOTS": (20, 50, 80), "SHOTS_ON_TARGET": (10, 25, 40),
-                "CORNERS": (10, 25, 40), "CARDS": (3, 15, 25),
+                "CORNERS": (10, 25, 40), "CARDS": (3, 15, 25), "CARD_POINTS": (30, 150, 250),
                 "FOULS": (15, 40, 70), "OFFSIDES": (10, 20, 30)}
     ceiling = ceilings[metric][("PLAYER", "TEAM", "MATCH").index(scope)] if sport == "FOOTBALL" and metric in ceilings else 10
     if record.period in {"1ST_HALF", "2ND_HALF"}:

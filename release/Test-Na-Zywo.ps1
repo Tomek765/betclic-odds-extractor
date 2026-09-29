@@ -31,6 +31,8 @@ Show "PROGRAM" $r.runtime_executable
 Show "EKSTRAKCJA" $r.extract_status
 Show "KURSY (zaakceptowane)" $r.odds_count
 Show "NIEROZWIAZANE" $r.unresolved_count
+Show "ROZWINIETE RYNKI" $r.expanded_market_controls
+Show "NIEROZWINIETE" $r.unexpanded_controls
 Show "KONTEKST" $r.context_status
 Show "PAKIET != KONTEKST" $r.products_distinct
 Show "BEZ SMIECI TECHNICZNYCH" $r.products_clean

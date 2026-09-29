@@ -58,13 +58,21 @@ def _rows(text):
     return lines[lines.index("|".join(COLUMNS)) + 1:]
 
 
+def _identity(row):
+    """A row's bet identity: everything except the letter case/spacing of the market title and RAW."""
+    fields = parse_llm_row(row)
+    fields["MARKET"] = " ".join(fields.get("MARKET", "").casefold().split())
+    fields.pop("RAW", None)
+    return tuple(sorted(fields.items()))
+
+
 class CleanLlmOutput(unittest.TestCase):
     def test_1_integrity_every_accepted_bet_has_a_clean_row(self):
         self.assertGreater(len(ACCEPTED), 900)
-        rows = set(_rows(CLEAN))
+        identities = {_identity(r) for r in _rows(CLEAN)}
         for record in ACCEPTED:
             row = odds_row(record)
-            self.assertTrue(row in rows or any(r.startswith(row + "|RAW=") for r in rows), row)
+            self.assertIn(_identity(row), identities, row)
 
     def test_2_and_3_odds_and_semantics_are_exact(self):
         semantic = ("FAMILY", "MARKET", "PERIOD", "OWNER", "SELECTION", "LINE", "SETTLEMENT",
@@ -88,7 +96,7 @@ class CleanLlmOutput(unittest.TestCase):
     def test_3c_only_identical_offers_are_merged(self):
         by_row = {}
         for record in ACCEPTED:
-            by_row.setdefault(odds_row(record), set()).add(_norm(record["RAW"]))
+            by_row.setdefault(_identity(odds_row(record)), set()).add(_norm(record["RAW"]))
         merged = {row for row, raws in by_row.items() if len(raws) == 1}
         rows = _rows(CLEAN)
         self.assertEqual(len(rows), len(merged) + sum(len(r) for row, r in by_row.items() if len(r) > 1))

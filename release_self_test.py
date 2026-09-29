@@ -104,6 +104,10 @@ def run_release_e2e(url: str) -> int:
             "market_count": extraction.get("market_count", 0),
             "unresolved_count": extraction.get("unresolved_count", 0),
             "incomplete_reasons": list(extraction.get("incomplete_reasons") or []),
+            "expanded_market_controls": sum(int(m.get("expanded_controls") or 0)
+                                            for m in extraction.get("coverage_manifest") or []),
+            "unexpanded_controls": sum(int(m.get("remaining_closed") or 0) + int(m.get("remaining_more") or 0)
+                                       for m in extraction.get("coverage_manifest") or []),
             "analysis_ready": extraction.get("analysis_ready"),
             "full_usable_ready": extraction.get("full_usable_ready"),
         })

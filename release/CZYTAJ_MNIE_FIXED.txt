@@ -1,4 +1,4 @@
-APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20260928_LIVE2)
+APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20260929_EXPAND)
 
 INSTALACJA (Windows 10/11 x64)
 1. Rozpakuj caly ZIP (np. do Pobrane).
@@ -8,7 +8,7 @@ INSTALACJA (Windows 10/11 x64)
      %LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
    - na pulpicie pojawi sie skrot "APEX Context Engine - FIXED"
    - program uruchomi sie z tego skrotu, a instalator sprawdzi, ze dziala
-     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20260928_LIVE2)
+     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20260929_EXPAND)
    - wynik zapisuje sie w INSTALL_REPORT.txt w folderze programu
 4. Jesli Windows SmartScreen pokaze "System Windows ochronil ten komputer",
    wybierz "Wiecej informacji" -> "Uruchom mimo to" (plik nie jest podpisany).
@@ -32,6 +32,18 @@ podana przyczyna. FAIL oznacza brak strukturalny (niezaladowana zakladka,
 nierozliczone kursy, brudny lub zly produkt).
 
 CO NAPRAWIONO
+- (audyt 4 meczow na zywo) Betclic pokazuje w wielu rynkach tylko 3 pierwsze
+  pozycje, a reszte ukrywa za przyciskiem ze strzalka w dol. Program nie
+  klikal tego przycisku, wiec w kazdym meczu brakowalo okolo polowy zakladow:
+  linie goli 3.5+, dalsze handicapy, wiele wynikow dokladnych, zaklady na
+  gospodarza/goscia w rynkach lacznych (np. Wynik meczu & oba zespoly
+  strzela), kolejni strzelcy. Teraz program rozwija te rynki i sprawdza, czy
+  sie rozwinely; nierozwiniety rynek daje status CZESCIOWY (nie po cichu).
+  Pakiet kursow jest przez to wyraznie wiekszy (wiecej zakladow).
+- Test na zywo pokazuje teraz ROZWINIETE RYNKI i NIEROZWINIETE.
+- Punkty za kartki (skala 10/25 pkt) nie sa juz zglaszane jako podejrzana linia.
+- Ten sam zaklad zapisany raz jako "Podwojna Szansa", raz jako "Podwojna
+  szansa" jest w pakiecie jednym wierszem.
 - (test na zywo Turcja - Wlochy) Karta Top "Wiecej kartek w meczu - druzyna"
   jest rozpoznawana; ta sama oferta z dwoch zakladek nie dubluje juz linii
   w sekcji lepszej ceny w kontekscie.

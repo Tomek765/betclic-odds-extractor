@@ -24,6 +24,7 @@ class CoverageManifest:
     raw_exported_signatures: set[str] = field(default_factory=set)
     virtualized_records_union_count: int = 0
     stabilization_passes: int = 0
+    see_more_baseline: dict[str, int] = field(default_factory=dict)
 
     def as_dict(self) -> dict[str, Any]:
         return {"main_tab": self.main_tab, "discovered_interactions": len(self.discovered_interactions),
@@ -88,7 +89,9 @@ class ExhaustiveStateCrawler:
         return """() => { const text=e=>(e.innerText||e.textContent||'').replace(/\\s+/g,' ').trim();
           const path=e=>{const a=[];for(let n=e;n&&n!==document.body;n=n.parentElement){if(n.matches('.marketBox,sports-market,[role=tabpanel],.accordion'))a.push(text(n).slice(0,80));}return a.join('>');};
           const isOdd=e=>e.matches('button')&&(/\\bodd\\b/i.test(e.className||'')||/^\\s*\\d{1,3}[,.]\\d{2}\\s*$/.test(text(e)));
-          const controls=[];document.querySelectorAll('button,[role=tab],[aria-expanded],[aria-controls],[data-testid]').forEach((e,i)=>{const t=text(e),x=e.getAttribute('aria-expanded');if(!t||isOdd(e)||e.disabled)return;if(e.getAttribute('role')==='tab'||x==='false'||/show|more|poka.{0,3}|rozwi.{0,3}|wi.{0,3}/i.test(t))controls.push({index:i,role:e.getAttribute('role')||'',text:t,aria_controls:e.getAttribute('aria-controls')||'',expanded:x,semantic_path:path(e),local_index:Array.prototype.indexOf.call(e.parentElement.children,e)});});
+          const controls=[],seeCount={};document.querySelectorAll('button,[role=tab],[aria-expanded],[aria-controls],[data-testid]').forEach((e,i)=>{const t=text(e),x=e.getAttribute('aria-expanded');
+          if(!isOdd(e)&&!e.disabled&&/seeMore/i.test(e.className||'')&&!e.closest('sports-betting-slip')){const box=e.closest('sports-markets-single-market,sports-market,.marketBox'),head=box&&box.querySelector('.marketBox_headTitle,h2,h3'),title=head?text(head):'',icon=e.querySelector('[class*=icon_arrow]'),k=title.toLowerCase();seeCount[k]=(seeCount[k]||0)+1;controls.push({index:i,role:'',text:'expander',aria_controls:'',expanded:/arrowUp/i.test(icon?String(icon.className||''):'')?'true':'false',semantic_path:title+'#'+seeCount[k],local_index:0,see_more:true,odds_in_box:box?Array.from(box.querySelectorAll('button')).filter(isOdd).length:0});return;}
+          if(!t||isOdd(e)||e.disabled)return;if(e.getAttribute('role')==='tab'||x==='false'||/show|more|poka.{0,3}|rozwi.{0,3}|wi.{0,3}/i.test(t))controls.push({index:i,role:e.getAttribute('role')||'',text:t,aria_controls:e.getAttribute('aria-controls')||'',expanded:x,semantic_path:path(e),local_index:Array.prototype.indexOf.call(e.parentElement.children,e)});});
           const scrolls=[];document.querySelectorAll('*').forEach((e,i)=>{const s=getComputedStyle(e),panel=e.closest('[role=tabpanel]');const active=e.isConnected&&e.getClientRects().length>0&&s.display!=='none'&&s.visibility!=='hidden'&&e.getAttribute('aria-hidden')!=='true'&&!(panel&&(panel.hidden||panel.getAttribute('aria-hidden')==='true'));const material=active&&Array.from(e.querySelectorAll('button,[role=button]')).some(isOdd);if(material&&((e.scrollHeight>e.clientHeight+2&&/(auto|scroll)/.test(s.overflowY))||(e.scrollWidth>e.clientWidth+2&&/(auto|scroll)/.test(s.overflowX))))scrolls.push({index:i,key:(e.id||e.className||e.tagName)+'|'+i,top:e.scrollTop,height:e.scrollHeight,client:e.clientHeight,left:e.scrollLeft,width:e.scrollWidth,clientWidth:e.clientWidth});});return {controls,scrolls}; }"""
 
     def _snapshot(self) -> dict[str, Any]:
@@ -100,9 +103,32 @@ class ExhaustiveStateCrawler:
     def _click_control(self, index: int) -> bool:
         try: return bool(self.page.evaluate("""i=>{const e=Array.from(document.querySelectorAll('button,[role=tab],[aria-expanded],[aria-controls],[data-testid]'))[i];if(!e)return false;e.click();return true;}""", index))
         except Exception: return False
+    def _click_controls(self, indices: list[int]) -> int:
+        """Click several controls resolved to elements *before* the first click.
+
+        Opening a market inserts price buttons, which shifts the position of
+        every later control; resolving all references up front keeps each click
+        on the intended element.
+        """
+        try: return int(self.page.evaluate("""idx=>{const all=Array.from(document.querySelectorAll('button,[role=tab],[aria-expanded],[aria-controls],[data-testid]'));const els=idx.map(i=>all[i]);let n=0;for(const e of els){if(e){e.click();n++;}}return n;}""", indices))
+        except Exception: return 0
     def _scroll(self, index: int, axis: str, position: int) -> bool:
         try: return bool(self.page.evaluate("""a=>{const e=Array.from(document.querySelectorAll('*'))[a.i];if(!e)return false;if(a.axis==='y')e.scrollTop=a.p;else e.scrollLeft=a.p;return true;}""", {"i": index, "axis": axis, "p": position}))
         except Exception: return False
+
+    @staticmethod
+    def _see_more_resolved(control: dict[str, Any], tab_name: str, manifest: CoverageManifest) -> bool:
+        """A clicked icon expander whose market now shows more priced buttons is open.
+
+        Betclic flips the arrow when it opens; if that ever changes, the growth
+        of the market is the evidence.  An expander that was never used, or
+        that revealed nothing, is reported as still closed (fail closed).
+        """
+        if not control.get("see_more"):
+            return False
+        key = stable_interaction_key(control, tab_name)
+        return (key in manifest.visited_interactions
+                and int(control.get("odds_in_box") or 0) > manifest.see_more_baseline.get(key, 1 << 30))
 
     def crawl_tab(self, tab_name: str) -> tuple[list[dict[str, Any]], CoverageManifest]:
         manifest, union, stable_passes, capture_no = CoverageManifest(tab_name), {}, 0, 0
@@ -118,9 +144,15 @@ class ExhaustiveStateCrawler:
             snap, actionable = self._snapshot(), []
             for control in snap.get("controls", []):
                 key = stable_interaction_key(control, tab_name); manifest.discovered_interactions.add(key)
+                if control.get("see_more"): manifest.see_more_baseline.setdefault(key, int(control.get("odds_in_box") or 0))
                 if key not in manifest.visited_interactions and (control.get("expanded") == "false" or MORE_RE.search(control.get("text", "")) or control.get("role") == "tab"): actionable.append((key, control))
             if actionable:
                 key, control = actionable[0]
+                if control.get("see_more"):
+                    batch = [(k, c) for k, c in actionable if c.get("see_more")]
+                    if len(batch) > 1 and self._click_controls([int(c["index"]) for _, c in batch]) == len(batch):
+                        manifest.visited_interactions.update(k for k, _ in batch); manifest.expanded_controls += len(batch)
+                        time.sleep(.15); stable_passes = 0; continue
                 if self._click_control(int(control["index"])): manifest.visited_interactions.add(key); manifest.expanded_controls += 1; time.sleep(.12); stable_passes = 0; continue
             scrolled = False
             for box in snap.get("scrolls", []):
@@ -132,5 +164,5 @@ class ExhaustiveStateCrawler:
                 manifest.finished_scroll_containers.add(key)
             if scrolled: stable_passes = 0; continue
             stable_passes = stable_passes + 1 if len(union) == before else 0
-        final = self._snapshot(); reconcile_active_scroll_containers(manifest, final); manifest.remaining_closed = sum(c.get("expanded") == "false" for c in final.get("controls", [])); manifest.remaining_more = sum(bool(MORE_RE.search(c.get("text", ""))) for c in final.get("controls", [])); manifest.stabilization_passes = stable_passes; manifest.raw_exported_signatures = set(union); manifest.virtualized_records_union_count = len(union)
+        final = self._snapshot(); reconcile_active_scroll_containers(manifest, final); manifest.remaining_closed = sum(c.get("expanded") == "false" and not self._see_more_resolved(c, tab_name, manifest) for c in final.get("controls", [])); manifest.remaining_more = sum(bool(MORE_RE.search(c.get("text", ""))) for c in final.get("controls", []) if not c.get("see_more")); manifest.stabilization_passes = stable_passes; manifest.raw_exported_signatures = set(union); manifest.virtualized_records_union_count = len(union)
         return list(union.values()), manifest

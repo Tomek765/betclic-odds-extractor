@@ -64,14 +64,21 @@ def render_llm_odds(header: Mapping[str, Any], records: Iterable[Mapping[str, An
                     status: str = "") -> str:
     rows: list[str] = []
     variants: dict[str, list[str]] = {}
+    shown: dict[str, str] = {}
     for record in records:
-        row = odds_row(record)
+        # The Top card and the Wynik tab can title one market "Podwójna Szansa"
+        # and "Podwójna szansa": same bet, same price.  The identity ignores the
+        # letter case and spacing of the title; the first spelling is shown.
+        identity = odds_row({**record, "MARKET": " ".join(str(record.get("MARKET") or "").casefold().split())})
         raw = _clean(record.get("RAW"))
-        if row not in variants:
-            variants[row] = []
-            rows.append(row)
-        if raw not in variants[row]:
-            variants[row].append(raw)
+        if identity not in variants:
+            variants[identity] = []
+            shown[identity] = odds_row(record)
+            rows.append(identity)
+        if raw not in variants[identity]:
+            variants[identity].append(raw)
+    variants = {shown[key]: value for key, value in variants.items()}
+    rows = [shown[key] for key in rows]
     # Identical rows from the same displayed offer (e.g. the Top and Wynik copy
     # of one market) are written once.  If the source texts differ, the
     # structured fields did not capture everything, so each offer keeps its

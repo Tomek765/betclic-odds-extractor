@@ -131,6 +131,40 @@ class SeeMoreExpanderTest(unittest.TestCase):
         # one-by-one opening would need 8 extra captures on top of the 3 stability passes
         self.assertLessEqual(len(captures), 6)
 
+    def test_player_markets_keep_their_default_view_and_the_skip_is_reported(self):
+        # Live audit Niemcy - Serbia: expanding scorer/pair lists gave 4,160 extra
+        # player bets (654 KB package, tabs over their time box).
+        players = market("pl", "Którykolwiek zawodnik strzeli gola", [("A + B", "1,30"), ("A + C", "1,31"), ("A + D", "1,32")],
+                         [("A + E", "1,40"), ("A + F", "1,41"), ("A + G", "1,42")])
+        records, manifest = self.crawl(page_html(GRID, players))
+        self.assertEqual(len(labels(records, "Wynik meczu & oba zespoły strzelą")), 6)
+        self.assertEqual(len(labels(records, "Którykolwiek zawodnik strzeli gola")), 3)
+        self.assertEqual((manifest.expanded_controls, manifest.remaining_closed, manifest.see_more_skipped and len(manifest.see_more_skipped)), (1, 0, 1))
+        self.assertEqual(manifest.as_dict()["see_more_skipped"], 1)
+
+    def test_player_market_expansion_can_be_enabled_explicitly(self):
+        import os
+        from unittest.mock import patch
+        players = market("pl", "Którykolwiek zawodnik strzeli gola", [("A + B", "1,30"), ("A + C", "1,31"), ("A + D", "1,32")],
+                         [("A + E", "1,40"), ("A + F", "1,41"), ("A + G", "1,42")])
+        with patch.dict(os.environ, {"APEX_EXPAND_PLAYER_MARKETS": "1"}):
+            records, manifest = self.crawl(page_html(players))
+        self.assertEqual(len(labels(records, "Którykolwiek zawodnik strzeli gola")), 6)
+        self.assertEqual(len(manifest.see_more_skipped), 0)
+
+    def test_player_market_titles_match_the_audited_betclic_titles(self):
+        from exhaustive import is_player_market_title
+        for title in ("2 graczy strzeli pow. 1,5 gole", "Którykolwiek zawodnik strzeli gola", "Strzelec", "Strzelcy",
+                      "Pierwszy strzelec", "Obaj gracze strzelą", "Wszyscy strzelą", "Liczba kartek zawodnika",
+                      "Strzelec - Xtra Wygrana", "Zawodnik strzeli gola głową", "Jeden z graczy strzeli pierwszego gola",
+                      "Liczba spalonych zawodnika (OPTA)"):
+            self.assertTrue(is_player_market_title(title), title)
+        for title in ("Gole Powyżej/Poniżej", "Dokładny wynik", "Handicap", "Liczba goli - Barcelona", "Rzuty rożne",
+                      "Punkty za kartki Powyżej/Poniżej", "Wynik meczu & oba zespoły strzelą", "Różnica goli",
+                      "Wynik Meczu Połowa / Cały", "Czas 1. gola", "Liczba celnych strzałów w meczu (OPTA) - Elche",
+                      "Podwójna szansa & powyżej/poniżej"):
+            self.assertFalse(is_player_market_title(title), title)
+
     def test_expander_that_keeps_its_arrow_is_still_resolved_by_new_bets(self):
         html = page_html(market("nf", "Różnica goli", [("A", "2,00"), ("B", "3,00"), ("C", "4,00")],
                                 [("D", "5,00"), ("E", "6,00"), ("F", "7,00")], behaviour="no_flip"))

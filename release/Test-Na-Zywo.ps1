@@ -33,6 +33,7 @@ Show "KURSY (zaakceptowane)" $r.odds_count
 Show "NIEROZWIAZANE" $r.unresolved_count
 Show "ROZWINIETE RYNKI" $r.expanded_market_controls
 Show "NIEROZWINIETE" $r.unexpanded_controls
+Show "RYNKI GRACZY (widok domyslny)" $r.player_expanders_left_at_default_view
 Show "KONTEKST" $r.context_status
 Show "PAKIET != KONTEKST" $r.products_distinct
 Show "BEZ SMIECI TECHNICZNYCH" $r.products_clean

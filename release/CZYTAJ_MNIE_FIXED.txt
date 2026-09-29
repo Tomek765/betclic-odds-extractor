@@ -1,4 +1,4 @@
-APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20260929_EXPAND)
+APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20260929_EXPAND2)
 
 INSTALACJA (Windows 10/11 x64)
 1. Rozpakuj caly ZIP (np. do Pobrane).
@@ -8,7 +8,7 @@ INSTALACJA (Windows 10/11 x64)
      %LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
    - na pulpicie pojawi sie skrot "APEX Context Engine - FIXED"
    - program uruchomi sie z tego skrotu, a instalator sprawdzi, ze dziala
-     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20260929_EXPAND)
+     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20260929_EXPAND2)
    - wynik zapisuje sie w INSTALL_REPORT.txt w folderze programu
 4. Jesli Windows SmartScreen pokaze "System Windows ochronil ten komputer",
    wybierz "Wiecej informacji" -> "Uruchom mimo to" (plik nie jest podpisany).
@@ -39,7 +39,10 @@ CO NAPRAWIONO
   gospodarza/goscia w rynkach lacznych (np. Wynik meczu & oba zespoly
   strzela), kolejni strzelcy. Teraz program rozwija te rynki i sprawdza, czy
   sie rozwinely; nierozwiniety rynek daje status CZESCIOWY (nie po cichu).
-  Pakiet kursow jest przez to wyraznie wiekszy (wiecej zakladow).
+  Rozwijane sa rynki meczowe (linie goli, handicapy, wyniki, rozne, kartki).
+  Rynki zawodnikow (strzelcy, pary graczy, asysty) zostaja w widoku domyslnym,
+  bo ich pelne listy to tysiace zakladow (test Niemcy - Serbia: 4723 kursy,
+  pakiet 654 KB, zakladki nie konczyly sie w limicie czasu).
 - Test na zywo pokazuje teraz ROZWINIETE RYNKI i NIEROZWINIETE.
 - Punkty za kartki (skala 10/25 pkt) nie sa juz zglaszane jako podejrzana linia.
 - Ten sam zaklad zapisany raz jako "Podwojna Szansa", raz jako "Podwojna

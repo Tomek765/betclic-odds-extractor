@@ -1,13 +1,35 @@
 """Stateful, non-betting UI crawler for exhaustive Betclic DOM capture."""
 from __future__ import annotations
 
+import os
 import re
 import time
+import unicodedata
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
 MORE_RE = re.compile(r"(?:show|poka.{0,3}|rozwi.{0,3}|more|wi.{0,3})", re.IGNORECASE)
+
+# Player-specific markets (scorer lists, assist lists, pairs/triples of players)
+# expand into their whole long tail: a live audit (Niemcy - Serbia, 2026-09-29)
+# went from ~1,100 to 4,723 accepted bets, 4,160 of them player combinations,
+# with a 654 KB package and tabs that no longer finished within their time box.
+# Only the shortest-priced entries Betclic shows by default matter for a
+# pre-match read, so these markets keep their default view.  The skip is
+# recorded in the coverage manifest (see_more_skipped), never silent.
+PLAYER_MARKET_RE = re.compile(
+    r"zawodnik|gracz|strzelec|strzelcy|asyst|zmiennik|supersub|xtra|ktorykolwiek|obaj|wszyscy|jeden z")
+
+
+def is_player_market_title(title: str) -> bool:
+    folded = unicodedata.normalize("NFKD", str(title).replace("ł", "l").replace("Ł", "L"))
+    folded = " ".join(folded.encode("ascii", "ignore").decode().casefold().split())
+    return bool(PLAYER_MARKET_RE.search(folded))
+
+
+def expand_player_markets() -> bool:
+    return os.environ.get("APEX_EXPAND_PLAYER_MARKETS", "") == "1"
 
 
 @dataclass
@@ -25,6 +47,7 @@ class CoverageManifest:
     virtualized_records_union_count: int = 0
     stabilization_passes: int = 0
     see_more_baseline: dict[str, int] = field(default_factory=dict)
+    see_more_skipped: set[str] = field(default_factory=set)
 
     def as_dict(self) -> dict[str, Any]:
         return {"main_tab": self.main_tab, "discovered_interactions": len(self.discovered_interactions),
@@ -35,7 +58,8 @@ class CoverageManifest:
                 "unique_visible_signatures": len(self.unique_visible_signatures),
                 "raw_exported_signatures": len(self.raw_exported_signatures),
                 "virtualized_records_union_count": self.virtualized_records_union_count,
-                "stabilization_passes": self.stabilization_passes}
+                "stabilization_passes": self.stabilization_passes,
+                "see_more_skipped": len(self.see_more_skipped)}
 
 
 def stable_interaction_key(item: dict[str, Any], main_tab: str) -> str:
@@ -127,6 +151,8 @@ class ExhaustiveStateCrawler:
         if not control.get("see_more"):
             return False
         key = stable_interaction_key(control, tab_name)
+        if key in manifest.see_more_skipped:
+            return True
         return (key in manifest.visited_interactions
                 and int(control.get("odds_in_box") or 0) > manifest.see_more_baseline.get(key, 1 << 30))
 
@@ -144,7 +170,10 @@ class ExhaustiveStateCrawler:
             snap, actionable = self._snapshot(), []
             for control in snap.get("controls", []):
                 key = stable_interaction_key(control, tab_name); manifest.discovered_interactions.add(key)
-                if control.get("see_more"): manifest.see_more_baseline.setdefault(key, int(control.get("odds_in_box") or 0))
+                if control.get("see_more"):
+                    manifest.see_more_baseline.setdefault(key, int(control.get("odds_in_box") or 0))
+                    if not expand_player_markets() and is_player_market_title(str(control.get("semantic_path", "")).rsplit("#", 1)[0]):
+                        manifest.see_more_skipped.add(key); continue
                 if key not in manifest.visited_interactions and (control.get("expanded") == "false" or MORE_RE.search(control.get("text", "")) or control.get("role") == "tab"): actionable.append((key, control))
             if actionable:
                 key, control = actionable[0]

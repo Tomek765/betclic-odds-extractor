@@ -1,4 +1,4 @@
-APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20260929_EXPAND2)
+APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20260929_EXPAND3)
 
 INSTALACJA (Windows 10/11 x64)
 1. Rozpakuj caly ZIP (np. do Pobrane).
@@ -8,7 +8,7 @@ INSTALACJA (Windows 10/11 x64)
      %LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
    - na pulpicie pojawi sie skrot "APEX Context Engine - FIXED"
    - program uruchomi sie z tego skrotu, a instalator sprawdzi, ze dziala
-     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20260929_EXPAND2)
+     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20260929_EXPAND3)
    - wynik zapisuje sie w INSTALL_REPORT.txt w folderze programu
 4. Jesli Windows SmartScreen pokaze "System Windows ochronil ten komputer",
    wybierz "Wiecej informacji" -> "Uruchom mimo to" (plik nie jest podpisany).
@@ -32,6 +32,10 @@ podana przyczyna. FAIL oznacza brak strukturalny (niezaladowana zakladka,
 nierozliczone kursy, brudny lub zly produkt).
 
 CO NAPRAWIONO
+- Litera "l z kreska" nie ginie juz w zakladach lacznych (Wlochy dawaly
+  WOCHY_/_TAK; "Zaden zespol nie strzeli" dawalo ZESPO).
+- Sekcja [DATA_QUALITY] kontekstu podaje nazwy rynkow, ktore stoja za kazda
+  przyczyna kwarantanny (QUARANTINED_MARKETS), bez otwierania osobnego pliku.
 - (audyt 4 meczow na zywo) Betclic pokazuje w wielu rynkach tylko 3 pierwsze
   pozycje, a reszte ukrywa za przyciskiem ze strzalka w dol. Program nie
   klikal tego przycisku, wiec w kazdym meczu brakowalo okolo polowy zakladow:

@@ -1762,7 +1762,9 @@ def parse_market_record(
             selection = match_compound["selection"]
             line = match_compound["line"]
         else:
-            condition = _semantic_text(canonical_raw_selection)
+            # "ł" has no ASCII decomposition and would silently vanish
+            # ("Włochy" -> "WOCHY", "zespół" -> "ZESPO"); transliterate it first.
+            condition = _semantic_text(str(canonical_raw_selection).replace("ł", "l").replace("Ł", "L"))
             # Preserve the source condition as semantic selection; explicit
             # normalisation below supplies equivalence only for proven forms.
             selection = condition.upper().replace(" ", "_")

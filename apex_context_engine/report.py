@@ -181,6 +181,15 @@ def render_match_context(context: ContextPacket) -> str:
     lines += ["", "[DATA_QUALITY]",
               f"QUARANTINED_BETS={sum(excluded.values())}" + (" (" + ", ".join(f"{k} {v}" for k, v in sorted(excluded.items())) + ")" if excluded else ""),
               f"NOT_MODELED_BETS={sum(not_modeled.values())}" + (" (" + ", ".join(f"{k} {v}" for k, v in sorted(not_modeled.items())) + ")" if not_modeled else "")]
+    by_reason: dict[str, Counter] = {}
+    for row in diagnostics:
+        if row["quarantine"]:
+            by_reason.setdefault(row["reason_code"], Counter())[row["market_name"]] += 1
+    for code in sorted(by_reason):
+        ranked = sorted(by_reason[code].items(), key=lambda item: (-item[1], item[0]))
+        shown = "; ".join(f"{name} x{count}" for name, count in ranked[:6])
+        rest = len(ranked) - 6
+        lines.append(f"QUARANTINED_MARKETS {code}: {shown}" + (f"; +{rest} more markets" if rest > 0 else ""))
     contradictions = [row["evidence"] for row in data["anomalies"] if row.get("type") == "EQUIVALENCE_PRICE_CONTRADICTION"]
     if contradictions:
         lines.append(f"PRICE_CONTRADICTIONS={len(contradictions)} (same settlement priced >50% apart; not offered as better price)")

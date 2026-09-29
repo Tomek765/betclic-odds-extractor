@@ -67,3 +67,47 @@ class CaseOnlyTitleDuplicatesAreListedOnce(unittest.TestCase):
                                         dict(base, MARKET="Podwójna szansa", RAW="Walia lub Remis 1.29")])
         self.assertIn("ODDS_COUNT=2", text)
         self.assertEqual(text.count("|RAW="), 2)
+
+
+class PolishLetterIsNotDroppedFromCompoundTokens(unittest.TestCase):
+    """Live Niemcy - Serbia: 'Żaden zespół nie strzeli' became ZADEN_ZESPO_NIE_STRZELI; 'Włochy' would be WOCHY."""
+
+    def parse(self, title, selection, home="Turcja", away="Włochy"):
+        from parser import parse_market_record
+        row, issue = parse_market_record(
+            category="Wynik", market_title=title, raw_selection=selection, odds_str="3.00",
+            raw_text=f"{selection} 3.00", section_title="", home_team=home, away_team=away, container_id="c")
+        self.assertIsNone(issue)
+        return row
+
+    def test_team_name_with_l_stroke_keeps_all_letters(self):
+        for title in ("Wynik meczu & oba zespoły strzelą", "Wynik/oba zespoły strzelą - 1. połowa"):
+            self.assertEqual(self.parse(title, "Włochy / Tak")["SELECTION"], "WLOCHY_/_TAK")
+            self.assertEqual(self.parse(title, "Włochy / Nie")["SELECTION"], "WLOCHY_/_NIE")
+            self.assertEqual(self.parse(title, "Turcja / Tak")["SELECTION"], "TURCJA_/_TAK")
+
+    def test_no_goal_option_keeps_its_letters(self):
+        row = self.parse("Wynik i kto zdobędzie 1. bramkę", "Remis / Żaden zespół nie strzeli")
+        self.assertEqual(row["SELECTION"], "REMIS_/_ZADEN_ZESPOL_NIE_STRZELI")
+
+    def test_recognised_forms_are_unchanged(self):
+        self.assertEqual(self.parse("Wynik i kto zdobędzie 1. bramkę", "Włochy / Turcja strzeli pierwszy")["SELECTION"],
+                         "AWAY_RESULT_AND_HOME_FIRST")
+        self.assertEqual(self.parse("Wynik Meczu Połowa / Cały", "Włochy / Włochy")["SELECTION"], "AWAY_AWAY")
+
+
+class QuarantineNamesItsMarkets(unittest.TestCase):
+    def test_data_quality_lists_the_markets_behind_each_reason(self):
+        from apex_context_engine.report import render_match_context
+        rows = [odd(FAMILY="GOAL_MARGIN", MARKET="Różnica goli", SELECTION="Remis", SETTLEMENT="UNKNOWN", ODDS="4.00", RAW="Remis 4.00"),
+                odd(FAMILY="GOAL_MARGIN", MARKET="Różnica goli", SELECTION="Bez goli", SETTLEMENT="UNKNOWN", ODDS="9.00", RAW="Bez goli 9.00")]
+        context = build_context(parse_packet_text(with_odds(*rows)))
+        report = render_match_context(context)
+        quality = report.split("[DATA_QUALITY]", 1)[1]
+        self.assertIn("QUARANTINED_BETS=2", quality)
+        self.assertRegex(quality, r"QUARANTINED_MARKETS \S+: Różnica goli x2")
+
+    def test_clean_capture_has_no_market_lines(self):
+        from apex_context_engine.report import render_match_context
+        report = render_match_context(build_context(parse_packet_text(with_odds(odd()))))
+        self.assertNotIn("QUARANTINED_MARKETS", report)

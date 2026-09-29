@@ -61,9 +61,16 @@ def _semantic_text(value: str) -> str:
 
 
 def is_correct_score_group_selection(selection: str) -> bool:
-    """Validate only the two audited three-score group display shapes."""
+    """Validate a closed list of three or more exact scores ("a-b, c-d lub e-f").
+
+    Live audit 2026-09-30 showed four-score groups ("3 - 2, 4 - 2, 4 - 3 lub
+    5 - 1").  A list of exact scores is fully self-describing.  Labels that
+    only say "<team> - Inny wynik" or "Remis" depend on the other groups and
+    are deliberately not matched.
+    """
+    score = r"\d+\s*-\s*\d+"
     return bool(re.fullmatch(
-        r"\d+\s*-\s*\d+\s*,\s*\d+\s*-\s*\d+\s*(?:,|lub)\s*\d+\s*-\s*\d+",
+        rf"{score}(?:\s*,\s*{score})+\s*(?:,|lub)\s*{score}",
         str(selection or "").strip(), re.IGNORECASE,
     ))
 
@@ -257,13 +264,19 @@ def _known_not_modeled_settlement(family: str, selection: str) -> str:
     if family == "EXACT_GOALS":
         return "WIN_LOSE" if re.fullmatch(r"\d+\+?", value) else "UNKNOWN"
     if family == "GOAL_RANGE":
-        return "WIN_LOSE" if re.fullmatch(r"\d+\+?(?:\s*-\s*\d+\+?)?", value) else "UNKNOWN"
+        # "Brak Gola" is the explicit zero-goals option of the same range market.
+        return "WIN_LOSE" if value == "brak gola" or re.fullmatch(r"\d+\+?(?:\s*-\s*\d+\+?)?", value) else "UNKNOWN"
     if family == "HIGHER_SCORING_HALF":
         return "WIN_LOSE" if value in {"remis", "draw"} or bool(re.fullmatch(r"[12]\.?\s+polowa", value)) else "UNKNOWN"
     if family == "GOAL_MARGIN":
-        return "WIN_LOSE" if "przewaga" in value and bool(re.search(r"\d", value)) else "UNKNOWN"
+        return "WIN_LOSE" if value == "remis" or ("przewaga" in value and bool(re.search(r"\d", value))) else "UNKNOWN"
     if family == "FIRST_GOAL_TIME":
-        return "WIN_LOSE" if re.fullmatch(r"\d{2}:\d{2}\s*-\s*(?:\d{2}:\d{2}|przerwa)", value) else "UNKNOWN"
+        # Windows end at a clock time, at the break, or at the stated end of
+        # regular time; "Przerwa - 59:59" mirrors the accepted "30:00 - Przerwa".
+        # "Brak Gola" is the explicit no-goal option.
+        return "WIN_LOSE" if value == "brak gola" or re.fullmatch(
+            r"\d{2}:\d{2}\s*-\s*(?:\d{2}:\d{2}|przerwa|koniec meczu \(90\s*min\))|przerwa\s*-\s*\d{2}:\d{2}",
+            value) else "UNKNOWN"
     if family == "QUALIFICATION_WINNER":
         return "WIN_LOSE" if value else "UNKNOWN"
     if family == "QUALIFICATION_METHOD":
@@ -855,11 +868,12 @@ def classify_family(market_title: str, selection: str, section_title: str,
     if "dokladna liczba" in semantic_title and ("goli" in semantic_title or "bramek" in semantic_title):
         return "EXACT_GOALS", explicit_team_owner()
     if "liczba goli - opcja" in semantic_title or (
-            "liczba goli" in semantic_title and re.fullmatch(r"\d+\+?(?:\s*-\s*\d+\+?)?", semantic_selection)):
+            "liczba goli" in semantic_title and (
+                re.fullmatch(r"\d+\+?(?:\s*-\s*\d+\+?)?", semantic_selection) or semantic_selection == "brak gola")):
         return "GOAL_RANGE", explicit_team_owner()
     if "polowa z wieksza" in semantic_title and ("liczba goli" in semantic_title or "iloscia goli" in semantic_title):
         return "HIGHER_SCORING_HALF", explicit_team_owner()
-    if "roznica goli" in semantic_title and "przewaga" in semantic_selection:
+    if "roznica goli" in semantic_title and ("przewaga" in semantic_selection or semantic_selection == "remis"):
         return "GOAL_MARGIN", ""
     if "strzela w obu polowach" in semantic_title and explicit_team_owner():
         return "TEAM_SCORES_BOTH_HALVES", explicit_team_owner()

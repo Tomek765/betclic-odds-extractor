@@ -111,3 +111,59 @@ class QuarantineNamesItsMarkets(unittest.TestCase):
         from apex_context_engine.report import render_match_context
         report = render_match_context(build_context(parse_packet_text(with_odds(odd()))))
         self.assertNotIn("QUARANTINED_MARKETS", report)
+
+
+class SelfDescribingHiddenOptionsAreAccepted(unittest.TestCase):
+    """Exact labels from the live Independiente Medellin - Millonarios quarantine (13 rows)."""
+
+    def parse(self, title, selection, home="Independiente Medellin", away="Millonarios"):
+        from core import _semantic_quarantine_reason
+        from parser import parse_market_record
+        row, issue = parse_market_record(
+            category="Wynik", market_title=title, raw_selection=selection, odds_str="5.00",
+            raw_text=f"{selection} 5.00", section_title="", home_team=home, away_team=away, container_id="c")
+        self.assertIsNone(issue)
+        return row, _semantic_quarantine_reason(row)
+
+    def test_clear_options_are_accepted(self):
+        for title, selection in (
+                ("Liczba goli - 1. połowa", "Brak Gola"), ("Liczba goli - 2. połowa", "Brak Gola"),
+                ("Czas 1. gola", "80:00 - Koniec meczu (90min)"), ("Czas 1. gola", "Brak Gola"),
+                ("Czas 1. gola - opcja II", "Przerwa - 59:59"),
+                ("Czas 1. gola - opcja II", "75:00 - Koniec meczu (90min)"),
+                ("Czas 1. gola - opcja II", "Brak Gola"),
+                ("Dokładny wynik w grupie", "3 - 2, 4 - 2, 4 - 3 lub 5 - 1"),
+                ("Dokładny wynik w grupie", "2 - 3, 2 - 4, 3 - 4 lub 1 - 5"),
+                ("Różnica goli", "Remis")):
+            row, reason = self.parse(title, selection)
+            self.assertEqual((reason, row["SETTLEMENT"]), ("", "WIN_LOSE"), (title, selection))
+
+    def test_labels_that_depend_on_other_groups_stay_quarantined(self):
+        for selection in ("Independiente Medellin - Inny wynik", "Millonarios - Inny wynik", "Remis"):
+            row, reason = self.parse("Dokładny wynik w grupie", selection)
+            self.assertEqual(reason, "UNCONFIRMED_MARKET_SETTLEMENT", selection)
+
+    def test_previously_accepted_shapes_and_junk_are_unchanged(self):
+        from parser import is_correct_score_group_selection as ok
+        for good in ("1 - 0, 2 - 0 lub 3 - 0", "4 - 0, 5 - 0 lub 6 - 0", "0-1, 0-2, 0-3"):
+            self.assertTrue(ok(good), good)
+        for bad in ("1 - 0", "1 - 0 lub 2 - 0", "1 - 0, 2 - 0", "Remis", "Inny wynik", "1 - 0, 2 - 0 lub Remis",
+                    "1 - 0 2 - 0 lub 3 - 0", ""):
+            self.assertFalse(ok(bad), bad)
+        for title, selection in (("Czas 1. gola", "80:00 - Koniec"), ("Czas 1. gola", "80:00 - Koniec meczu (120min)"),
+                                 ("Czas 1. gola", "Przerwa - Przerwa"), ("Liczba goli - 1. połowa", "Brak"),
+                                 ("Różnica goli", "Remis lub Serbia")):
+            _row, reason = self.parse(title, selection)
+            self.assertEqual(reason, "UNCONFIRMED_MARKET_SETTLEMENT", (title, selection))
+
+    def test_context_engine_takes_the_new_options_without_side_effects(self):
+        base = [odd()]
+        added = [odd(FAMILY="GOAL_RANGE", MARKET="Liczba goli - 1. połowa", PERIOD="1ST_HALF", SELECTION="Brak Gola", SETTLEMENT="WIN_LOSE", ODDS="3.40", RAW="Brak Gola 3.40"),
+                 odd(FAMILY="FIRST_GOAL_TIME", MARKET="Czas 1. gola", SELECTION="80:00 - Koniec meczu (90min)", SETTLEMENT="WIN_LOSE", ODDS="9.00", RAW="x 9.00"),
+                 odd(FAMILY="GOAL_MARGIN", MARKET="Różnica goli", SELECTION="Remis", SETTLEMENT="WIN_LOSE", ODDS="4.00", RAW="Remis 4.00"),
+                 odd(FAMILY="CORRECT_SCORE_GROUP", MARKET="Dokładny wynik w grupie", SELECTION="3 - 2, 4 - 2, 4 - 3 lub 5 - 1", SETTLEMENT="WIN_LOSE", ODDS="30.00", RAW="x 30.00")]
+        before = build_context(parse_packet_text(with_odds(*base)))
+        after = build_context(parse_packet_text(with_odds(*base, *added)))
+        self.assertEqual((after.status, after.quarantined_rows), (before.status, before.quarantined_rows))
+        self.assertEqual((after.fair_markets, after.best_price_alerts), (before.fair_markets, before.best_price_alerts))
+        self.assertEqual(after.accepted_rows - before.accepted_rows, 4)

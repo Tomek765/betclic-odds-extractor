@@ -1,4 +1,4 @@
-APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20260929_EXPAND3)
+APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND4)
 
 INSTALACJA (Windows 10/11 x64)
 1. Rozpakuj caly ZIP (np. do Pobrane).
@@ -8,7 +8,7 @@ INSTALACJA (Windows 10/11 x64)
      %LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
    - na pulpicie pojawi sie skrot "APEX Context Engine - FIXED"
    - program uruchomi sie z tego skrotu, a instalator sprawdzi, ze dziala
-     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20260929_EXPAND3)
+     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND4)
    - wynik zapisuje sie w INSTALL_REPORT.txt w folderze programu
 4. Jesli Windows SmartScreen pokaze "System Windows ochronil ten komputer",
    wybierz "Wiecej informacji" -> "Uruchom mimo to" (plik nie jest podpisany).
@@ -32,6 +32,12 @@ podana przyczyna. FAIL oznacza brak strukturalny (niezaladowana zakladka,
 nierozliczone kursy, brudny lub zly produkt).
 
 CO NAPRAWIONO
+- Opcje o jednoznacznym znaczeniu, ukryte wczesniej za rozwijanymi rynkami,
+  sa akceptowane zamiast trafiac do kwarantanny: "Brak Gola" (czas 1. gola,
+  liczba goli w polowie), "80:00 - Koniec meczu (90min)", "Przerwa - 59:59",
+  "Remis" w rynku Roznica goli oraz grupy 4 dokladnych wynikow. Etykiety
+  zalezne od innych grup ("<druzyna> - Inny wynik", "Remis" w grupie
+  wynikow) zostaja w kwarantannie.
 - Litera "l z kreska" nie ginie juz w zakladach lacznych (Wlochy dawaly
   WOCHY_/_TAK; "Zaden zespol nie strzeli" dawalo ZESPO).
 - Sekcja [DATA_QUALITY] kontekstu podaje nazwy rynkow, ktore stoja za kazda

@@ -240,7 +240,8 @@ def quarantine_diagnostics(context: ContextPacket) -> list[dict[str, object]]:
                          "disposition": "QUARANTINE" if is_quarantine else "NOT_MODELED",
                          "reason": code, "reason_code": code,
                          "reason_details": " ".join(QUARANTINE_REASON_DETAILS.get(r, r) for r in reasons),
-                         "source_stage": stage})
+                         "source_stage": stage,
+                         "source_context": str((row.get("original_fields") or {}).get("BOX_CONTEXT", ""))})
     return sorted(rows, key=lambda row: (row["source_stage"], str(row["record_id"]), str(row["market_name"])))
 
 

@@ -48,7 +48,7 @@ from parser import (
     recover_headerless_top_offer,
 )
 
-BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND4"
+BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND5"
 ACCOUNTING_SCHEMA_VERSION = "2.0"
 SEMANTIC_QUARANTINE_SCHEMA_VERSION = "2.0"
 DEFAULT_TAB_MAX_SECONDS = 60.0
@@ -856,6 +856,7 @@ def semantic_quarantine_ledger(rows: list[dict[str, Any]]) -> list[dict[str, Any
             "dom_path": row.get("DOM_PATH") or "",
             "section_path": row.get("SECTION_PATH") or "",
             "section_source": row.get("SECTION_SOURCE") or "",
+            "box_context": row.get("BOX_CONTEXT") or "",
         })
     return ledger
 
@@ -1577,6 +1578,7 @@ def _make_dom_script() -> str:
         + "      market_instance_id: marketInstanceId," + NL
         + "      dom_path: domPath," + NL
         + "      heading_path: headingPath," + NL
+        + "      box_context: marketBox ? cleanText(marketBox.innerText || marketBox.textContent).slice(0, 200) : ''," + NL
         + "      visibility: visibility," + NL
         + "      render_state: renderState," + NL
         + "      scroll_position: scrollPosition," + NL
@@ -2468,6 +2470,9 @@ class BetclicOddsExtractor:
                         odd_rec["SECTION_PATH"] = item.get("heading_path") or item.get("section_path") or item.get("ancestor_title") or ""
                         odd_rec["ACTIVE_TAB"] = item.get("active_tab") or tab_name
                         odd_rec["ACTIVE_SUBTAB"] = item.get("active_subtab") or ""
+                        # Diagnostic only: text around the market box, used to explain
+                        # quarantined rows.  Never part of the bets package.
+                        odd_rec["BOX_CONTEXT"] = str(item.get("box_context") or "")[:200]
                         odd_rec["SOURCE_VISIBILITY"] = item.get("visibility") or item.get("source_visibility") or "VISIBLE"
                         odd_rec["RENDER_STATE"] = item.get("render_state") or ""
                         odd_rec["SCROLL_POSITION"] = item.get("scroll_position") or ""
@@ -2989,6 +2994,7 @@ class BetclicOddsExtractor:
                 f'RAW_ORIGINAL="{quarantined.get("raw_original", "")}";',
                 f'REASON="{quarantined.get("reason", "")}";',
                 f'SOURCE_RAW_RECORD_IDS="{",".join(quarantined["source_raw_record_ids"])}";',
+                'BOX_CONTEXT="' + str(quarantined.get("box_context", "")).replace('"', "'").replace("\\", "/").replace("\n", " ") + '";',
                 "}",
                 "",
             ]

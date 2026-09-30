@@ -167,3 +167,45 @@ class SelfDescribingHiddenOptionsAreAccepted(unittest.TestCase):
         self.assertEqual((after.status, after.quarantined_rows), (before.status, before.quarantined_rows))
         self.assertEqual((after.fair_markets, after.best_price_alerts), (before.fair_markets, before.best_price_alerts))
         self.assertEqual(after.accepted_rows - before.accepted_rows, 4)
+
+
+class QuarantineShowsSourceContext(unittest.TestCase):
+    def test_box_context_reaches_the_diagnostics_file(self):
+        from apex_context_engine.report import quarantine_diagnostics
+        context = build_context(parse_packet_text(with_odds(odd()) +
+            '\nSEMANTIC_QUARANTINE{\nMARKET="Wynik";\nSELECTION="HOME";\nPERIOD="UNKNOWN";\n'
+            'REASON="UNCONFIRMED_MARKET_PERIOD";\nRAW_RECORD_ID="run_7:43";\n'
+            'BOX_CONTEXT="Wynik 0-15 min Grecja 7.25 Remis 1.29 Holandia 5.40";\n}\n'))
+        rows = [r for r in quarantine_diagnostics(context) if r["market_name"] == "Wynik"]
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["source_context"], "Wynik 0-15 min Grecja 7.25 Remis 1.29 Holandia 5.40")
+
+    def test_rows_without_context_have_an_empty_field(self):
+        from apex_context_engine.report import quarantine_diagnostics
+        context = build_context(parse_packet_text(with_odds(odd(ODDS="abc", RAW="x abc"))))
+        self.assertTrue(all(r["source_context"] == "" for r in quarantine_diagnostics(context)))
+
+
+class DomScriptCarriesTheBoxContext(unittest.TestCase):
+    def test_market_box_text_is_emitted_for_every_price(self):
+        try:
+            from playwright.sync_api import sync_playwright
+            playwright = sync_playwright().start()
+            browser = playwright.chromium.launch(headless=True)
+        except Exception as exc:  # pragma: no cover
+            raise unittest.SkipTest(f"Chromium unavailable: {exc}")
+        try:
+            from core import _extract_dom_from_page
+            page = browser.new_page()
+            page.set_content(
+                '<div class="marketBox"><h2 class="marketBox_headTitle">Wynik</h2>'
+                '<span class="chip is-active">0-15 min</span>'
+                '<div class="marketBox_lineSelection"><p class="marketBox_label">Remis</p>'
+                '<button class="btn is-odd"><span class="oddValue">1,29</span></button></div></div>')
+            records = _extract_dom_from_page(page, "Wynik")
+        finally:
+            browser.close()
+            playwright.stop()
+        self.assertEqual(len(records), 1)
+        self.assertIn("0-15 min", records[0]["box_context"])
+        self.assertLessEqual(len(records[0]["box_context"]), 200)

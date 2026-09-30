@@ -1,4 +1,4 @@
-APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND4)
+APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND5)
 
 INSTALACJA (Windows 10/11 x64)
 1. Rozpakuj caly ZIP (np. do Pobrane).
@@ -8,7 +8,7 @@ INSTALACJA (Windows 10/11 x64)
      %LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
    - na pulpicie pojawi sie skrot "APEX Context Engine - FIXED"
    - program uruchomi sie z tego skrotu, a instalator sprawdzi, ze dziala
-     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND4)
+     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND5)
    - wynik zapisuje sie w INSTALL_REPORT.txt w folderze programu
 4. Jesli Windows SmartScreen pokaze "System Windows ochronil ten komputer",
    wybierz "Wiecej informacji" -> "Uruchom mimo to" (plik nie jest podpisany).
@@ -32,6 +32,11 @@ podana przyczyna. FAIL oznacza brak strukturalny (niezaladowana zakladka,
 nierozliczone kursy, brudny lub zly produkt).
 
 CO NAPRAWIONO
+- Wynik testu na zywo pokazuje teraz WERSJE programu (trzeba sprawdzic, ze
+  jest to ta zainstalowana).
+- Plik APEX_QUARANTINE_DIAGNOSTICS.json ma pole source_context: tekst wokol
+  rynku w zrodle. Pozwala ustalic, czym sa rynki o golych nazwach ("Wynik",
+  "Gole") trafiajace do kwarantanny. Klasyfikacja sie nie zmienia.
 - Opcje o jednoznacznym znaczeniu, ukryte wczesniej za rozwijanymi rynkami,
   sa akceptowane zamiast trafiac do kwarantanny: "Brak Gola" (czas 1. gola,
   liczba goli w polowie), "80:00 - Koniec meczu (90min)", "Przerwa - 59:59",

@@ -28,6 +28,7 @@ $r = Get-Content $ResultPath -Raw -Encoding UTF8 | ConvertFrom-Json
 function Show([string]$name, $value) { Write-Host ("{0,-24} {1}" -f $name, $value) }
 Write-Host ""
 Show "PROGRAM" $r.runtime_executable
+Show "WERSJA" $r.build_id
 Show "EKSTRAKCJA" $r.extract_status
 Show "KURSY (zaakceptowane)" $r.odds_count
 Show "NIEROZWIAZANE" $r.unresolved_count

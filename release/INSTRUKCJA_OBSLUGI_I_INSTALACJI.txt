@@ -1,0 +1,202 @@
+﻿APEX CONTEXT ENGINE — INSTRUKCJA INSTALACJI I OBSŁUGI
+Wersja: APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND6 (commit d2e66e7)
+System: Windows 10 / 11, 64-bit
+
+======================================================================
+1. CO ROBI PROGRAM
+======================================================================
+Program otwiera stronę meczu Betclic, pobiera pełną ofertę kursową
+(także rynki ukryte za przyciskiem ze strzałką) i tworzy dwa produkty:
+
+  - PAKIET KURSÓW (APEX_ODDS_PACKAGE.txt) — jeden czysty wiersz na zakład:
+    rodzina | rynek | okres | drużyna | selekcja | linia | kurs | rozliczenie.
+    Gotowy do wklejenia do analizy AI bez czyszczenia.
+  - KONTEKST RYNKU (APEX_CONTEXT_REPORT.txt) — fair 1X2 bez marży,
+    oczekiwane gole, najbardziej prawdopodobne wyniki, rynki fair, dyscyplina
+    linii, lepsze ceny tego samego zakładu, jakość danych.
+
+Program nie zawiera AI, nie stawia zakładów i nie wymaga Pythona.
+Przeglądarka (Chromium) jest dołączona.
+
+======================================================================
+2. ZAWARTOŚĆ PACZKI
+======================================================================
+  INSTRUKCJA_OBSLUGI_I_INSTALACJI.txt   — ten plik
+  SUMY_KONTROLNE_SHA256.txt             — sumy kontrolne plików
+  APEX_Context_Engine_FIXED_2026-09-27\ — GOTOWY PROGRAM
+      APEX_Context_Engine.exe           — program
+      _internal\                        — biblioteki i przeglądarka (nie ruszać)
+      INSTALUJ.cmd                      — instalator (dwuklik)
+      TEST_NA_ZYWO.cmd                  — test na żywo (dwuklik)
+      CZYTAJ_MNIE_FIXED.txt             — lista poprawek
+      BUILD_INFO.txt                    — dane buildu i SHA-256 pliku EXE
+  KOD_ZRODLOWY\                         — pełny kod źródłowy i testy
+                                          (tylko do rozwoju; do używania
+                                          programu NIE jest potrzebny)
+
+Uwaga: data „2026-09-27” w nazwie folderu to nazwa linii wydań FIXED.
+Zawartość to aktualna wersja EXPAND6 z 30.09.2026.
+
+======================================================================
+3. PRZENIESIENIE NA INNY KOMPUTER — INSTALACJA
+======================================================================
+Wymagania: Windows 10/11 64-bit, internet, ok. 600 MB wolnego miejsca.
+Uprawnienia administratora NIE są potrzebne (instalacja dla bieżącego
+użytkownika).
+
+Krok 1. Skopiuj plik ZIP na nowy komputer (pendrive, dysk, chmura).
+Krok 2. Kliknij ZIP prawym przyciskiem → „Wyodrębnij wszystkie…” →
+        „Wyodrębnij”. Nie uruchamiaj niczego z wnętrza ZIP-a bez
+        rozpakowania.
+Krok 3. Wejdź do folderu APEX_Context_Engine_FIXED_2026-09-27.
+Krok 4. Kliknij dwukrotnie INSTALUJ.cmd.
+        - Jeśli pojawi się „System Windows ochronił ten komputer”
+          (SmartScreen): „Więcej informacji” → „Uruchom mimo to”.
+          Program nie ma podpisu cyfrowego wydawcy — to normalne.
+        - Instalator kopiuje program do:
+            %LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
+        - tworzy na pulpicie skrót „APEX Context Engine - FIXED”,
+        - uruchamia program ze skrótu i sprawdza, że w tytule okna jest
+          APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND6,
+        - na końcu wypisuje INSTALL_STATUS=PASS (zapisane też w
+          INSTALL_REPORT.txt w folderze programu).
+Krok 5. Naciśnij Enter, aby zamknąć okno instalatora. Program zostaje
+        otwarty.
+
+Wersja przenośna (bez instalacji): można też po prostu uruchomić
+APEX_Context_Engine.exe z rozpakowanego folderu. Nie wyjmuj samego pliku
+EXE z folderu — potrzebuje katalogu _internal obok siebie.
+
+Ponowna instalacja / aktualizacja: uruchom INSTALUJ.cmd z nowej paczki.
+Poprzednia wersja FIXED zostanie zastąpiona. Inne programy i starsza
+wersja „APEX Context Engine” (bez FIXED) nie są ruszane.
+
+Odinstalowanie: zamknij program, usuń folder
+%LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
+oraz skrót „APEX Context Engine - FIXED” z pulpitu. Wyniki (punkt 6)
+można usunąć osobno.
+
+(Aby wpisać %LOCALAPPDATA%: Win+R → wklej ścieżkę → Enter.)
+
+======================================================================
+4. PIERWSZE URUCHOMIENIE — TEST SPRAWDZAJĄCY
+======================================================================
+Zalecane zaraz po instalacji na nowym komputerze:
+
+1. Wybierz na Betclic.pl mecz piłki nożnej, który zaczyna się za co
+   najmniej 30 minut, i skopiuj link do jego strony (adres z paska
+   przeglądarki, np. https://www.betclic.pl/pilka-nozna-sfootball/...).
+2. Kliknij dwukrotnie TEST_NA_ZYWO.cmd (w folderze programu).
+3. Wklej link, naciśnij Enter. Otworzy się okno przeglądarki — nie
+   zamykaj go. Test trwa 1–3 minuty.
+4. Wynik:
+     PASS                  — wszystko działa.
+     PASS Z OSTRZEŻENIAMI  — działa; część ofert jest w jawnej kwarantannie
+                             z podaną przyczyną.
+     FAIL                  — problem strukturalny (patrz punkt 8).
+   Sprawdź, że WERSJA = APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND6,
+   NIEROZWIĄZANE = 0 i NIEROZWINIĘTE = 0.
+
+======================================================================
+5. CODZIENNA OBSŁUGA (OKNO PROGRAMU)
+======================================================================
+1. Uruchom skrót „APEX Context Engine - FIXED”.
+2. W polu „WKLEJ LINK BETCLIC:” wklej link do konkretnego meczu
+   (strona wydarzenia, nie lista meczów ligi).
+3. Kliknij „▶ POBIERZ WSZYSTKIE KURSY”.
+   - Otworzy się przeglądarka. Przy pierwszym uruchomieniu zaakceptuj
+     cookies Betclic w tym oknie.
+   - Nie zamykaj przeglądarki i nie klikaj w niej w trakcie pracy.
+   - Trwa to zwykle 1,5–3 minuty.
+4. Status końcowy:
+     GOTOWE / FULL USABLE   — pełny, poprawny pakiet. Można używać.
+     CZĘŚCIOWE              — część oferty się nie wczytała/rozwinęła.
+                              Uruchom ponownie.
+     ZABLOKOWANE / JAKOŚĆ   — mecz trwa, zakończony, przełożony albo dane
+                              niepewne. Nie używaj do analizy.
+     BŁĄD                   — patrz punkt 8.
+5. „📋 KOPIUJ PAKIET” — kopiuje czysty pakiet kursów do schowka
+   (wklej do analizy Ctrl+V).
+6. „ZBUDUJ KONTEKST RYNKU” — buduje i kopiuje raport kontekstu.
+   Status: CONTEXT: READY (gotowe) lub CONTEXT: BLOCKED (dane nie
+   nadają się do kontekstu).
+7. „OTWÓRZ FOLDER DIAGNOSTYKI” — otwiera folder z plikami wyników.
+8. Zamykaj program zwykłym przyciskiem X.
+
+ZASADY:
+  - Zawsze pobieraj kursy PRZED meczem. Sprawdź godzinę rozpoczęcia —
+    trwający mecz jest blokowany, a jego kursy nie są przedmeczowe.
+  - Do analizy używaj pakietu z NAJŚWIEŻSZEGO pobrania (kursy się
+    zmieniają).
+
+======================================================================
+6. GDZIE SĄ WYNIKI
+======================================================================
+Wszystkie wyniki i diagnostyka zapisują się w:
+  %LOCALAPPDATA%\APEX Context Engine
+Test na żywo zapisuje wyniki w osobnym folderze:
+  %LOCALAPPDATA%\APEX_FIXED_LIVE_TEST_<data_godzina>\release_self_test
+
+Najważniejsze pliki:
+  APEX_ODDS_PACKAGE.txt             — pakiet kursów (do analizy)
+  APEX_CONTEXT_REPORT.txt           — kontekst rynku
+  APEX_QUARANTINE_DIAGNOSTICS.json  — lista zakładów w kwarantannie
+                                      z przyczyną i fragmentem źródła
+  APEX_SOURCE_PACKET.txt            — pełny zapis techniczny (diagnostyka)
+  SELF_TEST_RESULT.json             — wynik testu na żywo
+
+======================================================================
+7. KWARANTANNA — CO OZNACZA
+======================================================================
+Program nigdy nie wyrzuca kursów po cichu. Zakład, którego znaczenia
+(okresu lub rozliczenia) nie da się jednoznacznie potwierdzić, trafia
+do kwarantanny — jest wymieniony z przyczyną, ale nie trafia do pakietu.
+
+Typowe (zamierzone) przyczyny:
+  UNCONFIRMED_XTRA_PAYOUT_CONTRACT     — rynki „Xtra Wygrana” (zasady
+                                         wypłaty nieustalone).
+  UNCONFIRMED_MARKET_SETTLEMENT        — np. „<drużyna> - Inny wynik”,
+                                         „Remis” w „Dokładny wynik w grupie”.
+  UNCONFIRMED_MARKET_PERIOD            — rynki bez jasnego okresu, np. okna
+                                         „00:00 - 14:59”, Gol Głową, Hat-trick.
+  UNSUPPORTED_OPTIONAL_STATISTICS_PERIOD — statystyki OPTA.
+
+Rynki zawodników (strzelcy, pary graczy) są pobierane w widoku
+domyślnym Betclic — celowo, bo pełne listy to tysiące zakładów.
+
+======================================================================
+8. ROZWIĄZYWANIE PROBLEMÓW
+======================================================================
+- SmartScreen / antywirus blokuje program: „Więcej informacji” →
+  „Uruchom mimo to”; ewentualnie dodaj folder programu do wyjątków
+  antywirusa.
+- „Uruchom instalator z ROZPAKOWANEGO folderu”: najpierw rozpakuj ZIP
+  (punkt 3, krok 2).
+- „Folder ... istnieje i nie zawiera buildu FIXED”: w folderze docelowym
+  jest coś innego — usuń go ręcznie albo zmień nazwę i powtórz instalację.
+- Przeglądarka pokazuje stronę ochronną / cookies / brak treści: zamknij
+  program, sprawdź internet, zaakceptuj cookies i uruchom ponownie.
+- Status ZABLOKOWANE: mecz już trwa lub link nie jest stroną meczu.
+- Status CZĘŚCIOWE lub test FAIL: uruchom ponownie. Jeśli się powtarza,
+  zachowaj zrzut ekranu i pliki z punktu 6 (szczególnie
+  SELF_TEST_RESULT.json, APEX_QUARANTINE_DIAGNOSTICS.json,
+  APEX_SOURCE_PACKET.txt) — na ich podstawie można zdiagnozować zmianę
+  po stronie Betclic.
+
+======================================================================
+9. KOD ŹRÓDŁOWY (DLA ROZWOJU — NIEPOTRZEBNY DO UŻYWANIA)
+======================================================================
+Folder KOD_ZRODLOWY zawiera kompletny kod (commit d2e66e7, gałąź
+claude/sleepy-ptolemy-yki9u7 repozytorium tomek765/betclic-odds-extractor),
+testy i skrypty budowania. Zasady utrzymania: AGENTS.md.
+
+Uruchomienie ze źródeł (wymaga Pythona 3.12):
+  pip install -r requirements.txt pytest
+  python -m playwright install chromium
+  python gui.py
+Testy:
+  python -m unittest discover -q
+  python -m pytest -q
+Budowanie wersji Windows (PyInstaller):
+  python build_exe.py
+  (szczegóły: release\Build-FixedRelease.ps1, BetclicFullOddsExtractor.spec)

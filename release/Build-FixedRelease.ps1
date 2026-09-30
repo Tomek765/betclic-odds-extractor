@@ -183,7 +183,7 @@ $Report["WINDOWS_BUILD"] = "PASS"
 
 Step "5. New release folder"
 Copy-Item $Dist $Target -Recurse
-Copy-Item (Join-Path $BuildSrc "README_START_PL.txt") $Target
+Copy-Item (Join-Path $BuildSrc "release\INSTRUKCJA_OBSLUGI_I_INSTALACJI.txt") $Target
 $junk = Get-ChildItem $Target -Recurse -Force | Where-Object {
     $_.Name -in @(".git", "__pycache__", ".pytest_cache", "diagnostics", "snapshots", "logs") -or $_.Name -like "*.log" -or $_.Name -like "test_*.py"
 }

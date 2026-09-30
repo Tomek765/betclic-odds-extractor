@@ -1,4 +1,4 @@
-APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND5)
+APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND6)
 
 INSTALACJA (Windows 10/11 x64)
 1. Rozpakuj caly ZIP (np. do Pobrane).
@@ -8,7 +8,7 @@ INSTALACJA (Windows 10/11 x64)
      %LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
    - na pulpicie pojawi sie skrot "APEX Context Engine - FIXED"
    - program uruchomi sie z tego skrotu, a instalator sprawdzi, ze dziala
-     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND5)
+     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND6)
    - wynik zapisuje sie w INSTALL_REPORT.txt w folderze programu
 4. Jesli Windows SmartScreen pokaze "System Windows ochronil ten komputer",
    wybierz "Wiecej informacji" -> "Uruchom mimo to" (plik nie jest podpisany).
@@ -32,6 +32,10 @@ podana przyczyna. FAIL oznacza brak strukturalny (niezaladowana zakladka,
 nierozliczone kursy, brudny lub zly produkt).
 
 CO NAPRAWIONO
+- Poprawka rozpoznawania opcji "Brak Gola", "...Koniec meczu (90min)",
+  "Przerwa - 59:59", "Remis" (Roznica goli) i grup 4 wynikow dziala
+  naprawde: w programie byly dwie kopie tej samej reguly i produkcyjna
+  nadpisywala poprawiona. Jest teraz jedna.
 - Wynik testu na zywo pokazuje teraz WERSJE programu (trzeba sprawdzic, ze
   jest to ta zainstalowana).
 - Plik APEX_QUARANTINE_DIAGNOSTICS.json ma pole source_context: tekst wokol

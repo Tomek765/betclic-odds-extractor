@@ -209,3 +209,45 @@ class DomScriptCarriesTheBoxContext(unittest.TestCase):
         self.assertEqual(len(records), 1)
         self.assertIn("0-15 min", records[0]["box_context"])
         self.assertLessEqual(len(records[0]["box_context"]), 200)
+
+
+class ProductionNormalizationUsesTheSameGrammar(unittest.TestCase):
+    """EXPAND4 unit tests passed while the live run still quarantined the rows: core.py held a second copy of
+    _known_not_modeled_settlement and recomputes SETTLEMENT in derive_market_normalization.  These tests go through
+    that production step with the exact live rows (Dania - Portugalia)."""
+
+    HOME, AWAY = "Dania", "Portugalia"
+
+    def through_production(self, title, selection):
+        from core import _semantic_quarantine_reason, derive_market_normalization
+        from parser import parse_market_record
+        row, issue = parse_market_record(
+            category="Wynik", market_title=title, raw_selection=selection, odds_str="5.00",
+            raw_text=f"{selection} 5.00", section_title="", home_team=self.HOME, away_team=self.AWAY,
+            container_id="c", source_raw_record_ids=["run_1:1"], raw_record_id="run_1:1")
+        self.assertIsNone(issue)
+        derive_market_normalization([row], self.HOME, self.AWAY)
+        return row["FAMILY"], row["SETTLEMENT"], _semantic_quarantine_reason(row)
+
+    def test_live_options_are_accepted_by_the_production_step(self):
+        for title, selection, family in (
+                ("Liczba goli - 1. połowa", "Brak Gola", "GOAL_RANGE"),
+                ("Liczba goli - 2. połowa", "Brak Gola", "GOAL_RANGE"),
+                ("Czas 1. gola", "80:00 - Koniec meczu (90min)", "FIRST_GOAL_TIME"),
+                ("Czas 1. gola", "Brak Gola", "FIRST_GOAL_TIME"),
+                ("Czas 1. gola - opcja II", "Przerwa - 59:59", "FIRST_GOAL_TIME"),
+                ("Czas 1. gola - opcja II", "75:00 - Koniec meczu (90min)", "FIRST_GOAL_TIME"),
+                ("Czas 1. gola - opcja II", "Brak Gola", "FIRST_GOAL_TIME"),
+                ("Dokładny wynik w grupie", "3 - 2, 4 - 2, 4 - 3 lub 5 - 1", "CORRECT_SCORE_GROUP"),
+                ("Różnica goli", "Remis", "GOAL_MARGIN")):
+            self.assertEqual(self.through_production(title, selection), (family, "WIN_LOSE", ""), (title, selection))
+
+    def test_labels_that_depend_on_other_groups_stay_quarantined(self):
+        for selection in ("Dania - Inny wynik", "Portugalia - Inny wynik", "Remis"):
+            family, settlement, reason = self.through_production("Dokładny wynik w grupie", selection)
+            self.assertEqual((family, settlement, reason), ("CORRECT_SCORE_GROUP", "UNKNOWN", "UNCONFIRMED_MARKET_SETTLEMENT"))
+
+    def test_there_is_one_settlement_grammar(self):
+        import core
+        import parser
+        self.assertIs(core._known_not_modeled_settlement, parser._known_not_modeled_settlement)

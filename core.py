@@ -46,9 +46,10 @@ from parser import (
     is_correct_score_group_selection,
     parse_market_record,
     recover_headerless_top_offer,
+    _known_not_modeled_settlement,
 )
 
-BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND5"
+BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND6"
 ACCOUNTING_SCHEMA_VERSION = "2.0"
 SEMANTIC_QUARANTINE_SCHEMA_VERSION = "2.0"
 DEFAULT_TAB_MAX_SECONDS = 60.0
@@ -88,39 +89,6 @@ def log_provider_transport_flush_summary(diag: DiagnosticsManager, listener: Any
             summary, sort_keys=True, separators=(",", ":"),
         ))
 
-
-def _known_not_modeled_settlement(family: str, selection: str) -> str:
-    """Validate the outcome shape of a standard market outside valuation scope."""
-    value = " ".join(unicodedata.normalize("NFKD", str(selection or "").replace("ł", "l").replace("Ł", "L").lower()).encode("ascii", "ignore").decode().split())
-    if family == "GOAL_PARITY":
-        return "WIN_LOSE" if value in {"parzyste", "nieparzyste", "even", "odd"} else "UNKNOWN"
-    if family in {"CLEAN_SHEET", "TEAM_WIN_TO_NIL", "TEAM_SCORES_BOTH_HALVES", "TEAM_WINS_ONE_HALF", "TEAM_WINS_BOTH_HALVES"}:
-        return "WIN_LOSE" if value in {"tak", "nie", "yes", "no"} else "UNKNOWN"
-    if family == "EXACT_GOALS":
-        return "WIN_LOSE" if re.fullmatch(r"\d+\+?", value) else "UNKNOWN"
-    if family == "GOAL_RANGE":
-        return "WIN_LOSE" if re.fullmatch(r"\d+\+?(?:\s*-\s*\d+\+?)?", value) else "UNKNOWN"
-    if family == "HIGHER_SCORING_HALF":
-        return "WIN_LOSE" if value in {"remis", "draw"} or bool(re.fullmatch(r"[12]\.?\s+polowa", value)) else "UNKNOWN"
-    if family == "GOAL_MARGIN":
-        return "WIN_LOSE" if "przewaga" in value and bool(re.search(r"\d", value)) else "UNKNOWN"
-    if family == "FIRST_GOAL_TIME":
-        return "WIN_LOSE" if re.fullmatch(r"\d{2}:\d{2}\s*-\s*(?:\d{2}:\d{2}|przerwa)", value) else "UNKNOWN"
-    if family == "QUALIFICATION_WINNER":
-        return "WIN_LOSE" if value else "UNKNOWN"
-    if family == "QUALIFICATION_METHOD":
-        return "WIN_LOSE" if value and any(token in value for token in ("90 min", "dogryw", "karn")) else "UNKNOWN"
-    if family == "BINARY_EVENT":
-        return "WIN_LOSE" if value in {"tak", "nie", "yes", "no"} else "UNKNOWN"
-    if family == "EVENT_FIRST_LAST":
-        return "WIN_LOSE" if value else "UNKNOWN"
-    if family in {"EVENT_RANGE", "EVENT_EXACT"}:
-        return "WIN_LOSE" if re.fullmatch(r"\d+(?:\+|\s*-\s*\d+\+?)?", value) else "UNKNOWN"
-    if family == "EVENT_PARITY":
-        return "WIN_LOSE" if value in {"parzyste", "nieparzyste", "even", "odd"} else "UNKNOWN"
-    if family == "EVENT_RESULT":
-        return "WIN_DRAW_LOSE" if value in {"home", "away", "draw"} else "UNKNOWN"
-    return "UNKNOWN"
 
 
 def validate_betclic_url(url: str) -> tuple[bool, str]:

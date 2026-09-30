@@ -186,7 +186,8 @@ domyślnym Betclic — celowo, bo pełne listy to tysiące zakładów.
 ======================================================================
 9. KOD ŹRÓDŁOWY (DLA ROZWOJU — NIEPOTRZEBNY DO UŻYWANIA)
 ======================================================================
-Folder KOD_ZRODLOWY zawiera kompletny kod (commit d2e66e7, gałąź
+Folder KOD_ZRODLOWY zawiera kompletny kod (program zbudowany z commitu
+d2e66e7; kod w paczce = d2e66e7 + ta instrukcja, gałąź
 claude/sleepy-ptolemy-yki9u7 repozytorium tomek765/betclic-odds-extractor),
 testy i skrypty budowania. Zasady utrzymania: AGENTS.md.
 

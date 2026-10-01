@@ -51,7 +51,7 @@ from parser import (
     _known_not_modeled_settlement,
 )
 
-BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20261001_FAST1"
+BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20261001_FAST2"
 ACCOUNTING_SCHEMA_VERSION = "2.0"
 SEMANTIC_QUARANTINE_SCHEMA_VERSION = "2.0"
 DEFAULT_TAB_MAX_SECONDS = 60.0
@@ -2255,6 +2255,17 @@ class BetclicOddsExtractor:
                     mycombi_rejected_this_tab: list[dict[str, Any]] = []
                     crawler = ExhaustiveStateCrawler(page, _extract_dom_from_page, tab_deadline, self.diag.log)
                     dom_data, manifest = crawler.crawl_tab(tab_name)
+                    if not dom_data and tab_elem and tab_name.strip().casefold() != "mycombi":
+                        # A visible market tab that stayed empty is re-opened
+                        # once before the capture may call it empty.
+                        self.diag.log(f"EMPTY_TAB_RETRY tab '{tab_name}'")
+                        try:
+                            (tab_elem.query_selector("span.tab_link") or tab_elem).click()
+                            time.sleep(1.5)
+                            dom_data, manifest = ExhaustiveStateCrawler(
+                                page, _extract_dom_from_page, tab_deadline, self.diag.log).crawl_tab(tab_name)
+                        except Exception as retry_exc:
+                            self.diag.log(f"EMPTY_TAB_RETRY_FAILED tab '{tab_name}': {retry_exc}")
                     # The persistent bet-slip is rendered beside every tab.  It is
                     # application state, not a market row of the currently scanned
                     # tab; collect its canonical MyCombi state only below.
@@ -2684,6 +2695,10 @@ class BetclicOddsExtractor:
             incomplete_reasons.append("LEDGER_TERMINAL_CONFLICT")
         if not parity_ok: incomplete_reasons.append("VISIBLE_RAW_PARITY")
         if any(m["stabilization_passes"] < 3 for m in core_manifests): incomplete_reasons.append("NOT_STABILIZED")
+        # A visible market tab without a single row is never silently complete.
+        if any(report.get("reason") == "EMPTY_TAB" and str(report.get("tab_name") or "").strip().casefold() != "mycombi"
+               for report in tab_reports):
+            incomplete_reasons.append("EMPTY_MAIN_TAB")
         completeness = completeness_breakdown(
             detected_tabs=len(detected_tabs), scanned_tabs=len(scanned_tabs), raw_records=len(raw_before_dedupe),
             # Canonical dedupe is representation-preserving via lineage: all
@@ -2733,7 +2748,8 @@ class BetclicOddsExtractor:
         exhaustive_ready = "NO" if optional_statistics_count or core_semantic_quarantine_rows or incomplete_reasons else "YES"
         full_usable_ready = "YES" if not unresolved_count and not any(reason in incomplete_reasons for reason in (
             "UNVISITED_MAIN_TAB", "REMAINING_CLOSED", "REMAINING_MORE", "UNFINISHED_SCROLL_CONTAINERS",
-            "VISIBLE_RAW_PARITY", "NOT_STABILIZED", "UNACCOUNTED_PRICED_CANDIDATES", "TAB_STATUS_FAIL"
+            "VISIBLE_RAW_PARITY", "NOT_STABILIZED", "UNACCOUNTED_PRICED_CANDIDATES", "TAB_STATUS_FAIL",
+            "EMPTY_MAIN_TAB",
         )) else "NO"
         analysis_scope_override = ""
         if full_usable_ready == "YES" and global_truth_status == "PASS":

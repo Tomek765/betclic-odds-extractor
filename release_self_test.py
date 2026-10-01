@@ -111,6 +111,9 @@ def run_release_e2e(url: str) -> int:
                                                          for m in extraction.get("coverage_manifest") or []),
             "unexpanded_controls": sum(int(m.get("remaining_closed") or 0) + int(m.get("remaining_more") or 0)
                                        for m in extraction.get("coverage_manifest") or []),
+            "empty_tabs": [str(t.get("tab_name") or "") for t in extraction.get("tab_reports") or []
+                           if t.get("reason") == "EMPTY_TAB"
+                           and str(t.get("tab_name") or "").strip().casefold() != "mycombi"],
             "analysis_ready": extraction.get("analysis_ready"),
             "full_usable_ready": extraction.get("full_usable_ready"),
         })

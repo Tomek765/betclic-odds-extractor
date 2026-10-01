@@ -47,6 +47,9 @@ if ($r.PSObject.Properties.Name -contains "quarantine_summary" -and $r.quarantin
 }
 Write-Host ""
 $verdict = if ($r.PSObject.Properties.Name -contains "verdict") { $r.verdict } elseif ($r.passed) { "PASS" } else { "FAIL" }
+if ($r.PSObject.Properties.Name -contains "empty_tabs" -and $r.empty_tabs) {
+    Show "PUSTE ZAKLADKI" ($r.empty_tabs -join ", ")
+}
 if ($r.PSObject.Properties.Name -contains "structural_incomplete_reasons" -and $r.structural_incomplete_reasons) {
     Show "BRAKI STRUKTURALNE" ($r.structural_incomplete_reasons -join ", ")
 }

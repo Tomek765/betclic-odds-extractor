@@ -9,6 +9,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
+EMPTY_TAB_GRACE_SECONDS = 8.0
 MORE_RE = re.compile(r"(?:show|poka.{0,3}|rozwi.{0,3}|more|wi.{0,3})", re.IGNORECASE)
 
 # Player-specific markets (scorer lists, assist lists, pairs/triples of players)
@@ -158,6 +159,10 @@ class ExhaustiveStateCrawler:
 
     def crawl_tab(self, tab_name: str) -> tuple[list[dict[str, Any]], CoverageManifest]:
         manifest, union, stable_passes, capture_no = CoverageManifest(tab_name), {}, 0, 0
+        # Betclic renders some tabs lazily: three quick empty passes ended the
+        # Strzelcy tab after 0.8 s with zero rows (live 2026-10-01, Bosnia and
+        # Herzegovina - Sweden).  An empty market tab must wait for content.
+        started, wait_for_content = time.time(), tab_name.strip().casefold() != "mycombi"
         while time.time() < self.deadline and stable_passes < 3:
             before, capture_no = len(union), capture_no + 1
             for raw_record in self.capture(self.page, tab_name):
@@ -192,6 +197,8 @@ class ExhaustiveStateCrawler:
                 if scrolled: break
                 manifest.finished_scroll_containers.add(key)
             if scrolled: stable_passes = 0; continue
+            if not union and wait_for_content and time.time() - started < EMPTY_TAB_GRACE_SECONDS:
+                stable_passes = 0; time.sleep(.4); continue
             stable_passes = stable_passes + 1 if len(union) == before else 0
         final = self._snapshot(); reconcile_active_scroll_containers(manifest, final); manifest.remaining_closed = sum(c.get("expanded") == "false" and not self._see_more_resolved(c, tab_name, manifest) for c in final.get("controls", [])); manifest.remaining_more = sum(bool(MORE_RE.search(c.get("text", ""))) for c in final.get("controls", []) if not c.get("see_more")); manifest.stabilization_passes = stable_passes; manifest.raw_exported_signatures = set(union); manifest.virtualized_records_union_count = len(union)
         return list(union.values()), manifest

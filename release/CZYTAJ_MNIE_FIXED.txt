@@ -1,4 +1,4 @@
-APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20261001_FAST1)
+APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20261001_FAST2)
 
 INSTALACJA (Windows 10/11 x64)
 1. Rozpakuj caly ZIP (np. do Pobrane).
@@ -8,7 +8,7 @@ INSTALACJA (Windows 10/11 x64)
      %LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
    - na pulpicie pojawi sie skrot "APEX Context Engine - FIXED"
    - program uruchomi sie z tego skrotu, a instalator sprawdzi, ze dziala
-     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20261001_FAST1)
+     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20261001_FAST2)
    - wynik zapisuje sie w INSTALL_REPORT.txt w folderze programu
 4. Jesli Windows SmartScreen pokaze "System Windows ochronil ten komputer",
    wybierz "Wiecej informacji" -> "Uruchom mimo to" (plik nie jest podpisany).
@@ -32,6 +32,12 @@ podana przyczyna. FAIL oznacza brak strukturalny (niezaladowana zakladka,
 nierozliczone kursy, brudny lub zly produkt).
 
 CO NAPRAWIONO
+- (test na zywo Bosnia i Hercegowina - Szwecja) Zakladka Strzelcy laduje sie
+  z opoznieniem; program konczyl ja po 0,8 s z zerem kursow i wynikiem PASS,
+  gubiac wszystkie rynki strzelcow tej zakladki. Teraz pusta zakladka czeka
+  na tresc do 8 s, jest otwierana ponownie, a jesli nadal jest pusta, wynik
+  to CZESCIOWE (EMPTY_MAIN_TAB) - nigdy cichy PASS. Test na zywo pokazuje
+  PUSTE ZAKLADKI.
 - (test na zywo Borussia Dortmund - Werder) Karty Fast (np. "Zawodnik strzeli"
   z oknem "00:00 - 14:59 Edytuj") pokazywane tez w zakladkach Top i Strzelcy
   byly brane za caly mecz (Guirassy strzeli: kurs 13 jako strzelec w meczu).

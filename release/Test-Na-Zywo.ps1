@@ -31,6 +31,7 @@ Show "PROGRAM" $r.runtime_executable
 Show "WERSJA" $r.build_id
 Show "EKSTRAKCJA" $r.extract_status
 Show "KURSY (zaakceptowane)" $r.odds_count
+Show "KURSY W PAKIECIE (unikalne)" $r.odds_package_rows
 Show "NIEROZWIAZANE" $r.unresolved_count
 Show "ROZWINIETE RYNKI" $r.expanded_market_controls
 Show "NIEROZWINIETE" $r.unexpanded_controls

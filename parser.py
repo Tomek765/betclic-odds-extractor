@@ -1112,6 +1112,27 @@ _TIME_WINDOW_EVIDENCE = re.compile(
 )
 
 
+# Betclic "Fast" cards ("Wynik", "Gole", "Zawodnik strzeli" ...) settle on a
+# user-selectable minute window rendered in the card header as
+# "00:00 - 14:59 Edytuj".  The same card is also shown in the Top and
+# Strzelcy tabs, where only the card text carries the window (live
+# 2026-10-01, Borussia Dortmund - Werder: "Zawodnik strzeli" Guirassy 13
+# was accepted as a full-match anytime scorer).
+_SELECTABLE_WINDOW = re.compile(
+    r"\b\d{1,2}[:.]\d{2}\s*[-–]\s*(?:\d{1,2}[:.]\d{2}|przerwa|koniec\b[^0-9]{0,30}?)\s*edytuj\b",
+    re.IGNORECASE)
+
+
+def has_selectable_time_window(box_context: str) -> bool:
+    """Whether a market card declares an editable minute window (Fast market)."""
+    return bool(_SELECTABLE_WINDOW.search(str(box_context or "")))
+
+
+def is_fast_window_tab(tab: str) -> bool:
+    """The "⚡ Fast" tab only lists minute-window markets."""
+    return "fast" in _period_text(tab).split()
+
+
 def classify_period_detail(market_title: str, section_title: str, period_hint: str = "",
                            ancestor_title: str = "", main_tab: str = "",
                            family: str = "") -> tuple[str, str, str]:

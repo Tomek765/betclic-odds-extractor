@@ -121,6 +121,10 @@ def run_release_e2e(url: str) -> int:
             odds_package = extraction.get("llm_packet_text", "")
             package_path = output_dir / "APEX_ODDS_PACKAGE.txt"
             package_path.write_text(odds_package, encoding="utf-8", newline="\n")
+            # The same offer shown in several tabs is one package row.
+            report["odds_package_rows"] = next(
+                (int(line.split("=", 1)[1]) for line in odds_package.splitlines()
+                 if line.startswith("ODDS_COUNT=") and line.split("=", 1)[1].isdigit()), 0)
             context = run_context_engine(
                 packet_text,
                 Path(__file__).resolve().parent,

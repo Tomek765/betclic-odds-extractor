@@ -1,5 +1,5 @@
 ﻿APEX CONTEXT ENGINE — INSTRUKCJA INSTALACJI I OBSŁUGI
-Wersja: APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND6 (commit d2e66e7)
+Wersja: APEX_CONTEXT_ENGINE_FIXED_20261001_FAST1
 System: Windows 10 / 11, 64-bit
 
 ======================================================================
@@ -35,7 +35,7 @@ Przeglądarka (Chromium) jest dołączona.
                                           programu NIE jest potrzebny)
 
 Uwaga: data „2026-09-27” w nazwie folderu to nazwa linii wydań FIXED.
-Zawartość to aktualna wersja EXPAND6 z 30.09.2026.
+Zawartość to aktualna wersja FAST1 z 01.10.2026.
 
 ======================================================================
 3. PRZENIESIENIE NA INNY KOMPUTER — INSTALACJA
@@ -57,7 +57,7 @@ Krok 4. Kliknij dwukrotnie INSTALUJ.cmd.
             %LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
         - tworzy na pulpicie skrót „APEX Context Engine - FIXED”,
         - uruchamia program ze skrótu i sprawdza, że w tytule okna jest
-          APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND6,
+          APEX_CONTEXT_ENGINE_FIXED_20261001_FAST1,
         - na końcu wypisuje INSTALL_STATUS=PASS (zapisane też w
           INSTALL_REPORT.txt w folderze programu).
 Krok 5. Naciśnij Enter, aby zamknąć okno instalatora. Program zostaje
@@ -94,8 +94,11 @@ Zalecane zaraz po instalacji na nowym komputerze:
      PASS Z OSTRZEŻENIAMI  — działa; część ofert jest w jawnej kwarantannie
                              z podaną przyczyną.
      FAIL                  — problem strukturalny (patrz punkt 8).
-   Sprawdź, że WERSJA = APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND6,
+   Sprawdź, że WERSJA = APEX_CONTEXT_ENGINE_FIXED_20261001_FAST1,
    NIEROZWIĄZANE = 0 i NIEROZWINIĘTE = 0.
+   KURSY (zaakceptowane) liczy każdą kopię zakładu z każdej zakładki;
+   KURSY W PAKIECIE to unikalne zakłady (ta sama oferta pokazana w kilku
+   zakładkach jest w pakiecie jednym wierszem).
 
 ======================================================================
 5. CODZIENNA OBSŁUGA (OKNO PROGRAMU)
@@ -186,8 +189,8 @@ domyślnym Betclic — celowo, bo pełne listy to tysiące zakładów.
 ======================================================================
 9. KOD ŹRÓDŁOWY (DLA ROZWOJU — NIEPOTRZEBNY DO UŻYWANIA)
 ======================================================================
-Folder KOD_ZRODLOWY zawiera kompletny kod (program zbudowany z commitu
-d2e66e7; kod w paczce = d2e66e7 + ta instrukcja, gałąź
+Folder KOD_ZRODLOWY zawiera kompletny kod (commit podany w BUILD_INFO.txt
+i SUMY_KONTROLNE_SHA256.txt, gałąź
 claude/sleepy-ptolemy-yki9u7 repozytorium tomek765/betclic-odds-extractor),
 testy i skrypty budowania. Zasady utrzymania: AGENTS.md.
 

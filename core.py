@@ -43,13 +43,15 @@ from parser import (
     classify_period,
     classify_period_detail,
     clean_team_name,
+    has_selectable_time_window,
+    is_fast_window_tab,
     is_correct_score_group_selection,
     parse_market_record,
     recover_headerless_top_offer,
     _known_not_modeled_settlement,
 )
 
-BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND6"
+BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20261001_FAST1"
 ACCOUNTING_SCHEMA_VERSION = "2.0"
 SEMANTIC_QUARANTINE_SCHEMA_VERSION = "2.0"
 DEFAULT_TAB_MAX_SECONDS = 60.0
@@ -724,7 +726,10 @@ def _semantic_quarantine_reason(item: dict[str, Any]) -> str:
         return "UNCONFIRMED_TEAM_OWNER"
     if is_player_prop_record(item) and not _has_player_entity_scope(item):
         return "UNCONFIRMED_PLAYER_PROP_SCOPE"
-    if item.get("PERIOD") == "UNKNOWN":
+    # A Fast card settles on a selectable minute window, never the full match,
+    # whichever tab displayed it.
+    window_market = bool(item.get("TIME_WINDOW_MARKET")) or _declares_time_window(item)
+    if item.get("PERIOD") == "UNKNOWN" or window_market:
         if is_player_prop_record(item) or "zawodnik" in title or "player" in title:
             return "UNCONFIRMED_PLAYER_PROP_PERIOD"
         if tab == "statystyki":
@@ -733,6 +738,23 @@ def _semantic_quarantine_reason(item: dict[str, Any]) -> str:
     if item.get("SETTLEMENT") == "UNKNOWN":
         return "UNCONFIRMED_MARKET_SETTLEMENT"
     return ""
+
+
+def _declares_time_window(item: dict[str, Any]) -> bool:
+    return (has_selectable_time_window(str(item.get("BOX_CONTEXT") or ""))
+            or is_fast_window_tab(str(item.get("CATEGORY") or item.get("MAIN_TAB") or "")))
+
+
+def mark_time_window_markets(rows: list[dict[str, Any]]) -> None:
+    """Flag every copy of a minute-window card, including copies whose own tab
+    text does not show the window (Top/Strzelcy copies of a Fast card share
+    the Fast copy's raw source records)."""
+    window_ids = {raw_id for row in rows if _declares_time_window(row)
+                  for raw_id in (row.get("source_raw_record_ids") or [row.get("raw_record_id")]) if raw_id}
+    for row in rows:
+        ids = {raw_id for raw_id in (row.get("source_raw_record_ids") or [row.get("raw_record_id")]) if raw_id}
+        if _declares_time_window(row) or ids & window_ids:
+            row["TIME_WINDOW_MARKET"] = True
 
 
 def is_semantically_quarantined(item: dict[str, Any]) -> bool:
@@ -744,6 +766,7 @@ def partition_semantic_records(rows: list[dict[str, Any]]) -> tuple[list[dict[st
     """Split records once, preserving row order and source lineage unchanged."""
     accepted: list[dict[str, Any]] = []
     quarantined: list[dict[str, Any]] = []
+    mark_time_window_markets(rows)
     for row in rows:
         (quarantined if is_semantically_quarantined(row) else accepted).append(row)
     return accepted, quarantined
@@ -930,6 +953,8 @@ def _dedupe_records_preserving_order(
         ids = list(survivor.get("source_raw_record_ids") or ([] if not survivor.get("raw_record_id") else [survivor["raw_record_id"]]))
         ids += list(incoming.get("source_raw_record_ids") or ([] if not incoming.get("raw_record_id") else [incoming["raw_record_id"]]))
         survivor["source_raw_record_ids"] = list(dict.fromkeys(ids))
+        if incoming.get("TIME_WINDOW_MARKET") or _declares_time_window(incoming):
+            survivor["TIME_WINDOW_MARKET"] = True
 
     def process_item(item: dict[str, str]) -> bool:
         # Physical capture provenance is deliberately *not* semantic identity.
@@ -1050,6 +1075,8 @@ def _dedupe_canonical_export_rows(records: list[dict[str, Any]]) -> tuple[list[d
         survivor = unique[seen[key]]
         ids = list(survivor.get("source_raw_record_ids") or []) + list(record.get("source_raw_record_ids") or [])
         survivor["source_raw_record_ids"] = sorted(set(ids))
+        if record.get("TIME_WINDOW_MARKET") or _declares_time_window(record):
+            survivor["TIME_WINDOW_MARKET"] = True
         survivor["representation_count"] = int(survivor.get("representation_count") or 1) + int(record.get("representation_count") or 1)
     return unique, len(groups), len(records) - len(unique)
 

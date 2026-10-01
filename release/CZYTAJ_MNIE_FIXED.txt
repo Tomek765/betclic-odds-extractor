@@ -1,4 +1,4 @@
-APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND6)
+APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20261001_FAST1)
 
 INSTALACJA (Windows 10/11 x64)
 1. Rozpakuj caly ZIP (np. do Pobrane).
@@ -8,7 +8,7 @@ INSTALACJA (Windows 10/11 x64)
      %LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
    - na pulpicie pojawi sie skrot "APEX Context Engine - FIXED"
    - program uruchomi sie z tego skrotu, a instalator sprawdzi, ze dziala
-     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20260930_EXPAND6)
+     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20261001_FAST1)
    - wynik zapisuje sie w INSTALL_REPORT.txt w folderze programu
 4. Jesli Windows SmartScreen pokaze "System Windows ochronil ten komputer",
    wybierz "Wiecej informacji" -> "Uruchom mimo to" (plik nie jest podpisany).
@@ -32,6 +32,13 @@ podana przyczyna. FAIL oznacza brak strukturalny (niezaladowana zakladka,
 nierozliczone kursy, brudny lub zly produkt).
 
 CO NAPRAWIONO
+- (test na zywo Borussia Dortmund - Werder) Karty Fast (np. "Zawodnik strzeli"
+  z oknem "00:00 - 14:59 Edytuj") pokazywane tez w zakladkach Top i Strzelcy
+  byly brane za caly mecz (Guirassy strzeli: kurs 13 jako strzelec w meczu).
+  Kazda karta z wybieranym oknem minut i cala zakladka Fast trafia teraz do
+  jawnej kwarantanny okresu, nigdy do pakietu jako caly mecz.
+- Test na zywo pokazuje KURSY W PAKIECIE (unikalne zaklady) obok liczby
+  zaakceptowanych kopii ze wszystkich zakladek.
 - Poprawka rozpoznawania opcji "Brak Gola", "...Koniec meczu (90min)",
   "Przerwa - 59:59", "Remis" (Roznica goli) i grup 4 wynikow dziala
   naprawde: w programie byly dwie kopie tej samej reguly i produkcyjna

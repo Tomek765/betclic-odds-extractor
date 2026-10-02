@@ -117,7 +117,10 @@ def render_match_context(context: ContextPacket) -> str:
     offense, discipline = data["offense_map"] or {}, data["line_discipline"] or {}
     lines = ["APEX_MATCH_CONTEXT"]
     lines += [f"{key}={' '.join(str(truth.get(key) or '').split())}" for key in ("MATCH", "COMPETITION", "KICKOFF")]
-    lines += [f"STATUS={data['status']}", "LABEL=MARKET_IMPLIED_CONTEXT_ONLY"]
+    # Left-out offers never reach the reader of the context: a usable context
+    # is simply PASS here (the JSON packet keeps PASS_WITH_QUARANTINE).
+    shown_status = "PASS" if data["status"] == "PASS_WITH_QUARANTINE" else data["status"]
+    lines += [f"STATUS={shown_status}", "LABEL=MARKET_IMPLIED_CONTEXT_ONLY"]
     if data["status"] == "BLOCKED":
         lines.append("BLOCKED_REASONS=" + ",".join(data["blocked_reasons"]))
         return "\n".join(lines) + "\n"
@@ -175,23 +178,12 @@ def render_match_context(context: ContextPacket) -> str:
                     seen_lines.add(line)
                     lines.append(line)
 
-    diagnostics = quarantine_diagnostics(context)
-    excluded = Counter(row["reason_code"] for row in diagnostics if row["quarantine"])
-    not_modeled = Counter(row["reason_code"] for row in diagnostics if not row["quarantine"])
-    lines += ["", "[DATA_QUALITY]",
-              f"QUARANTINED_BETS={sum(excluded.values())}" + (" (" + ", ".join(f"{k} {v}" for k, v in sorted(excluded.items())) + ")" if excluded else ""),
-              f"NOT_MODELED_BETS={sum(not_modeled.values())}" + (" (" + ", ".join(f"{k} {v}" for k, v in sorted(not_modeled.items())) + ")" if not_modeled else "")]
-    by_reason: dict[str, Counter] = {}
-    for row in diagnostics:
-        if row["quarantine"]:
-            by_reason.setdefault(row["reason_code"], Counter())[row["market_name"]] += 1
-    for code in sorted(by_reason):
-        ranked = sorted(by_reason[code].items(), key=lambda item: (-item[1], item[0]))
-        shown = "; ".join(f"{name} x{count}" for name, count in ranked[:6])
-        rest = len(ranked) - 6
-        lines.append(f"QUARANTINED_MARKETS {code}: {shown}" + (f"; +{rest} more markets" if rest > 0 else ""))
+    # Offers without proven Betclic settlement rules are left out of both
+    # products on purpose; the reader of the context never needs to reason
+    # about them.  They stay listed in APEX_QUARANTINE_DIAGNOSTICS.json.
     contradictions = [row["evidence"] for row in data["anomalies"] if row.get("type") == "EQUIVALENCE_PRICE_CONTRADICTION"]
     if contradictions:
+        lines += ["", "[DATA_QUALITY]"]
         lines.append(f"PRICE_CONTRADICTIONS={len(contradictions)} (same settlement priced >50% apart; not offered as better price)")
         for row in contradictions:
             lines.append("CONTRADICTION " + " vs ".join(f"{market} {odds}" for market, _category, odds in row["markets"]))

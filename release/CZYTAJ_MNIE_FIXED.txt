@@ -1,13 +1,13 @@
-APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20261002_FAST3)
+APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20261002_FAST4)
 
 ZAWSZE NAJNOWSZA WERSJA
-Instaluj tylko paczke z najnowszym znacznikiem (np. FAST3). Stare paczki
+Instaluj tylko paczke z najnowszym znacznikiem (np. FAST4). Stare paczki
 usun - instalator je wskaze i moze przeniesc do Kosza. Wersje widac w oknie
 programu (WERSJA: ...) i w tescie na zywo (wiersz WERSJA).
 
 INSTALACJA (Windows 10/11 x64)
 1. Rozpakuj caly ZIP (np. do Pobrane). Nie uruchamiaj jako Administrator.
-2. Wejdz do folderu APEX_Context_Engine_FAST3 (nazwa zawiera wersje).
+2. Wejdz do folderu APEX_Context_Engine_FAST4 (nazwa zawiera wersje).
 3. Kliknij dwukrotnie INSTALUJ.cmd.
    - instalator pokaze wersje zainstalowana i nowa; starszej wersji na
      miejsce nowszej NIE zainstaluje
@@ -17,7 +17,7 @@ INSTALACJA (Windows 10/11 x64)
      %LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
    - na pulpicie pojawi sie skrot "APEX Context Engine - FIXED"
    - program uruchomi sie z tego skrotu, a instalator sprawdzi, ze dziala
-     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20261002_FAST3)
+     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20261002_FAST4)
    - wynik zapisuje sie w INSTALL_REPORT.txt w folderze programu
 4. Jesli Windows SmartScreen pokaze "System Windows ochronil ten komputer",
    wybierz "Wiecej informacji" -> "Uruchom mimo to" (plik nie jest podpisany).
@@ -35,13 +35,20 @@ Kliknij dwukrotnie TEST_NA_ZYWO.cmd (w rozpakowanym folderze albo w folderze
 programu), wklej link do meczu przed rozpoczeciem i poczekaj 1-3 minuty.
 Test uruchamia program ze swojego folderu i sprawdza jego wersje.
 Wynik PASS oznacza: ekstrakcja poprawna, pakiet kursow i kontekst to dwa
-rozne, czyste produkty. Sekcja CELOWO POMINIETE to nie sa bledy - to oferty
+rozne, czyste produkty. Wiersz POMINIETE CELOWO to nie sa bledy - to oferty
 bez potwierdzonych zasad rozliczenia Betclic.
 PASS Z OSTRZEZENIAMI oznacza: program dziala poprawnie, ale np. Betclic nie
 pokazal jednej zakladki (PUSTE ZAKLADKI) - reszta danych jest kompletna.
 FAIL oznacza brak strukturalny albo ZLA WERSJA PROGRAMU.
 
 CO NAPRAWIONO
+- (FAST4, wersja finalna) Zakladka MyCombi (kreator kombinacji, nigdy nie
+  miala kursow) nie jest juz skanowana - oszczednosc do 13 s.
+- Dlugie zakladki (Statystyki, Strzelcy, Gole) sa przewijane wiekszym
+  krokiem (80% ekranu, z zakladka) - mniej przebiegow, ten sam komplet.
+- Pakiet i kontekst nie wspominaja o pominietych ofertach (kontekst ma
+  STATUS=PASS); test na zywo pokazuje jedna linie POMINIETE CELOWO.
+  Szczegoly tylko w APEX_QUARANTINE_DIAGNOSTICS.json.
 - (test na zywo Wegry - Gruzja, 2.10) Test wykonal STARY program EXPAND2 z
   29.09 zamiast najnowszego: kazda wersja rozpakowywala sie do folderu o tej
   samej nazwie, a instalator bez slowa instalowal starsza wersje na miejsce

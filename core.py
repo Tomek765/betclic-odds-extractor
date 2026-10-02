@@ -52,10 +52,10 @@ from parser import (
     _known_not_modeled_settlement,
 )
 
-BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20261002_FAST3"
+BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20261002_FAST4"
 # Monotonic release order (UTC yyyymmddHHMM).  version_guard and the
 # installer compare it with BUILD_INFO.txt BUILD_SEQ / BUILT_AT of older builds.
-BUILD_SEQ = 202610021630
+BUILD_SEQ = 202610021900
 ACCOUNTING_SCHEMA_VERSION = "2.0"
 SEMANTIC_QUARANTINE_SCHEMA_VERSION = "2.0"
 DEFAULT_TAB_MAX_SECONDS = 60.0
@@ -135,6 +135,11 @@ _RUNTIME_ERROR_HINTS = (
      "NETWORK_ERROR",
      "Brak połączenia z Betclic. Sprawdź internet i spróbuj ponownie."),
 )
+
+
+def _is_bet_builder_tab(name: str) -> bool:
+    """Betclic's MyCombi bet-builder tab (no standalone market odds)."""
+    return str(name or "").strip().casefold() == "mycombi"
 
 
 def _friendly_runtime_error(exc: BaseException) -> tuple[str, str]:
@@ -2209,6 +2214,15 @@ class BetclicOddsExtractor:
                             pass
                 except Exception:
                     pass
+
+            # MyCombi is Betclic's bet builder: in every live capture (12 matches,
+            # 2026-09-28..10-02) it held no market odds yet cost up to 13 s.  Its
+            # offers are built from the markets of the other tabs, so it is not
+            # scanned (user request 2026-10-02).
+            skipped_tabs = [name for name, _ in detected_tabs if _is_bet_builder_tab(name)]
+            detected_tabs = [(name, elem) for name, elem in detected_tabs if not _is_bet_builder_tab(name)]
+            if skipped_tabs:
+                self.diag.log(f"Skipped bet-builder tabs: {skipped_tabs}")
 
             if not detected_tabs:
                 detected_tabs = [("GŁÓWNE", None)]

@@ -93,8 +93,7 @@ class A_Independence(unittest.TestCase):
             self.assertIn(ODDS_HEADER, package)
             self.assertNotIn(ODDS_HEADER, context)
             self.assertTrue(context.startswith("APEX_MATCH_CONTEXT\n"))
-            for section in ("[MARKET_SCRIPT]", "FAIR_1X2=", "EXPECTED_GOALS=", "CENTRAL_SCORES=", "[FAIR_MARKETS]",
-                            "[DATA_QUALITY]"):
+            for section in ("[MARKET_SCRIPT]", "FAIR_1X2=", "EXPECTED_GOALS=", "CENTRAL_SCORES=", "[FAIR_MARKETS]"):
                 self.assertIn(section, context)
             self.assertNotIn("[MARKET_SCRIPT]", package)
             for token in JUNK:
@@ -104,7 +103,9 @@ class A_Independence(unittest.TestCase):
             self.assertIn(f"MATCH={match['home']} - {match['away']}", context)
 
     def test_context_reports_real_quarantine_and_not_modeled_separately(self):
-        self.assertIn("QUARANTINED_BETS=36 (UNCONFIRMED_XTRA_PAYOUT_CONTRACT 36)", A["context"])
+        # Left-out offers are not mentioned in the context (user request 2026-10-02).
+        self.assertNotIn("QUARANTIN", A["context"])
+        self.assertNotIn("NOT_MODELED", A["context"])
 
 
 class GuiWorkflow(unittest.TestCase):

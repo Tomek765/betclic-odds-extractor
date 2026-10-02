@@ -14,6 +14,9 @@ EMPTY_TAB_GRACE_SECONDS = 8.0
 # rendered lazily, or revealed by an expander or a scroll, arrive late.  Three
 # quick identical passes (~0.3 s) could end a tab before they did.
 QUIET_SECONDS = 1.2
+# Scroll steps overlap by 20 % of the visible height, so every row of a
+# virtualized list is rendered in at least one capture (was 50 %: twice the
+# captures on the long Statystyki/Strzelcy/Gole tabs).
 MORE_RE = re.compile(r"(?:show|poka.{0,3}|rozwi.{0,3}|more|wi.{0,3})", re.IGNORECASE)
 
 # Player-specific markets (scorer lists, assist lists, pairs/triples of players)
@@ -218,7 +221,7 @@ class ExhaustiveStateCrawler:
                 key = str(box["key"]); manifest.scroll_containers.add(key)
                 for axis, size, client, pos in (("y", box["height"], box["client"], box["top"]), ("x", box["width"], box["clientWidth"], box["left"])):
                     if size > client + 2 and pos < size - client - 1:
-                        self._scroll(int(box["index"]), axis, min(pos + max(120, client // 2), size - client)); time.sleep(.08); scrolled = True; break
+                        self._scroll(int(box["index"]), axis, min(pos + max(120, (client * 4) // 5), size - client)); time.sleep(.08); scrolled = True; break
                 if scrolled: break
                 manifest.finished_scroll_containers.add(key)
             if scrolled: stable_passes = 0; continue

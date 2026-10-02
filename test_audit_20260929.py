@@ -96,21 +96,23 @@ class PolishLetterIsNotDroppedFromCompoundTokens(unittest.TestCase):
         self.assertEqual(self.parse("Wynik Meczu Połowa / Cały", "Włochy / Włochy")["SELECTION"], "AWAY_AWAY")
 
 
-class QuarantineNamesItsMarkets(unittest.TestCase):
-    def test_data_quality_lists_the_markets_behind_each_reason(self):
-        from apex_context_engine.report import render_match_context
+class QuarantineStaysOutOfTheContext(unittest.TestCase):
+    """The user asked (2026-10-02) that the context never mention left-out offers."""
+
+    def test_context_does_not_mention_quarantine_but_diagnostics_keep_it(self):
+        from apex_context_engine.report import quarantine_diagnostics, render_match_context
         rows = [odd(FAMILY="GOAL_MARGIN", MARKET="Różnica goli", SELECTION="Remis", SETTLEMENT="UNKNOWN", ODDS="4.00", RAW="Remis 4.00"),
                 odd(FAMILY="GOAL_MARGIN", MARKET="Różnica goli", SELECTION="Bez goli", SETTLEMENT="UNKNOWN", ODDS="9.00", RAW="Bez goli 9.00")]
         context = build_context(parse_packet_text(with_odds(*rows)))
         report = render_match_context(context)
-        quality = report.split("[DATA_QUALITY]", 1)[1]
-        self.assertIn("QUARANTINED_BETS=2", quality)
-        self.assertRegex(quality, r"QUARANTINED_MARKETS \S+: Różnica goli x2")
+        for token in ("QUARANTIN", "NOT_MODELED", "[DATA_QUALITY]"):
+            self.assertNotIn(token, report)
+        self.assertEqual(sum(row["quarantine"] for row in quarantine_diagnostics(context)), 2)
 
-    def test_clean_capture_has_no_market_lines(self):
+    def test_clean_capture_has_no_quarantine_lines(self):
         from apex_context_engine.report import render_match_context
         report = render_match_context(build_context(parse_packet_text(with_odds(odd()))))
-        self.assertNotIn("QUARANTINED_MARKETS", report)
+        self.assertNotIn("QUARANTIN", report)
 
 
 class SelfDescribingHiddenOptionsAreAccepted(unittest.TestCase):

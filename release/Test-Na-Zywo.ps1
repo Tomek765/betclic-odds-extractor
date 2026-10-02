@@ -11,7 +11,7 @@
 Set-StrictMode -Version 3
 $ErrorActionPreference = "Stop"
 
-$ExpectedBuild = "APEX_CONTEXT_ENGINE_FIXED_20261002_FAST3"
+$ExpectedBuild = "APEX_CONTEXT_ENGINE_FIXED_20261002_FAST4"
 $InstallDir = Join-Path $env:LOCALAPPDATA "Programs\APEX_Context_Engine_FIXED_2026-09-27"
 $Installed = Join-Path $InstallDir "APEX_Context_Engine.exe"
 $Local = Join-Path $PSScriptRoot "APEX_Context_Engine.exe"
@@ -83,28 +83,12 @@ Show "KONTEKST (bajty)" (Field $r "context_bytes")
 $emptyTabs = Field $r "empty_tabs"
 if ($emptyTabs) { Show "PUSTE ZAKLADKI (Betclic)" ($emptyTabs -join ", ") }
 
-# Offers left out on purpose: their Betclic settlement rules are not proven.
-$why = @{
-    "UNCONFIRMED_XTRA_PAYOUT_CONTRACT"       = "Xtra Wygrana - zasady wyplaty nieopublikowane"
-    "UNCONFIRMED_MARKET_SETTLEMENT"          = "opcje zalezne od innych (np. 'Inny wynik', 'Remis' w grupach)"
-    "UNCONFIRMED_MARKET_PERIOD"              = "rynki bez okreslonego czasu (np. Gol glowa, okna minut Fast)"
-    "UNCONFIRMED_PLAYER_PROP_PERIOD"         = "rynki zawodnikow bez okreslonego czasu (np. karty Fast)"
-    "UNSUPPORTED_OPTIONAL_STATISTICS_PERIOD" = "statystyki bez okreslonego czasu (np. OPTA, punkty za kartki)"
-    "UNCONFIRMED_TEAM_OWNER"                 = "rynek druzyny bez nazwy druzyny"
-    "UNCONFIRMED_PLAYER_PROP_SCOPE"          = "rynek zawodnika bez nazwiska"
-    "UNSUPPORTED_PERIOD:OTHER"               = "statystyki liczone z dogrywka (np. faule OPTA) - inny czas niz mecz"
-    "UNSUPPORTED_PERIOD:QUALIFICATION"       = "awans / rywalizacja - inny zaklad niz wynik meczu"
-}
+# Offers without proven Betclic settlement rules are left out of the package
+# on purpose; one line is enough (details: APEX_QUARANTINE_DIAGNOSTICS.json).
 $summary = Field $r "quarantine_summary"
 if ($summary) {
-    Write-Host ""
-    Write-Host "CELOWO POMINIETE (to NIE sa bledy programu - zasady Betclic niepotwierdzone):"
-    $summary.PSObject.Properties | ForEach-Object {
-        # "DISPOSITION:STAGE:REASON" - the reason itself may contain ":" (UNSUPPORTED_PERIOD:OTHER).
-        $code = ($_.Name -split ":", 3)[-1]
-        $text = if ($why.ContainsKey($code)) { $why[$code] } else { $code }
-        Write-Host ("  {0,4} x {1}  [{2}]" -f $_.Value, $text, $code)
-    }
+    $left = ($summary.PSObject.Properties | Measure-Object -Property Value -Sum).Sum
+    Show "POMINIETE CELOWO" "$left (oferty bez zasad Betclic - nie sa bledem, nie trafiaja do pakietu)"
 }
 Write-Host ""
 

@@ -34,3 +34,17 @@ Accounting: 1236 identity representatives = 856 core accepted + 380 quarantined.
 Core quarantine is 351 player + 29 statistics; export is 291 + 29.
 The old PERIOD_UNKNOWN_COUNT counted only accepted core rows. Worse, Context's
 block regex omitted SEMANTIC_QUARANTINE entirely. Preserve and count these blocks.
+
+## 2026-10-02 — card titles: decision recorded
+
+Live Wegry - Gruzja still quarantined "Punkty za kartki Powyżej/Poniżej",
+"Dokładna liczba kartek - <team>", "Pierwszy zespół który otrzyma kartkę" and
+"Czerwona kartka (- <team>)" for an unproven period. Extending the
+"Match/team cards use regulation time" sentence to them was tried and
+reverted: the audited regression tests (test_non_goal_event_total_false_accept,
+test_aggregate_event_contract_recovery, test_package_context_quarantine) record
+that the terms copy does not document these specific contracts. Only
+"Liczba kartek", "Więcej kartek" and "Kartki - <team>" carry the documented
+rule. "Czerwona kartka (- <team>)" now has its closed Tak/Nie outcome shape
+(BINARY_EVENT, team owner) and is listed among contracts whose duration still
+needs evidence, so it stays explicitly quarantined.

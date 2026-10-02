@@ -388,11 +388,11 @@ def _audited_event_contract_requires_time_evidence(
         "wiecej kartek", "pierwszy strzal", "pierwszy celny strzal",
         "pierwszy zespol ktory otrzyma kartke", "dokladna liczba kartek",
         "pierwsza druzyna, ktora popelni faul",
-        "punkty za kartki powyzej/ponizej",
+        "punkty za kartki powyzej/ponizej", "czerwona kartka",
     }:
         return True
     for team in filter(None, (_contract_text(home_team), _contract_text(away_team))):
-        if title in {f"kartki - {team}", f"dokladna liczba kartek - {team}"}:
+        if title in {f"kartki - {team}", f"dokladna liczba kartek - {team}", f"czerwona kartka - {team}"}:
             return True
     return False
 
@@ -793,6 +793,16 @@ def classify_family(market_title: str, selection: str, section_title: str,
     if semantic_selection in {"tak", "nie", "yes", "no"}:
         owners = [team for team in (home_team, away_team) if team and semantic_title ==
                   "strzela gola bezposrednio z rzutu wolnego - " + _semantic_text(team)]
+        if len(owners) == 1:
+            return "BINARY_EVENT", owners[0]
+        # Red card in the match / for one named team (live 2026-10-02,
+        # Wegry - Gruzja, Statystyki tab): a closed Tak/Nie outcome shape.  Its
+        # duration is not documented, so the period stays unresolved.
+        card_title = _semantic_text(str(market_title).replace("ł", "l").replace("Ł", "L"))
+        if card_title == "czerwona kartka":
+            return "BINARY_EVENT", ""
+        owners = [team for team in (home_team, away_team) if team and card_title ==
+                  "czerwona kartka - " + _semantic_text(str(team).replace("ł", "l").replace("Ł", "L"))]
         if len(owners) == 1:
             return "BINARY_EVENT", owners[0]
     if (semantic_title in _EXACT_COMPOUND_MATCH_EVENT_TITLES

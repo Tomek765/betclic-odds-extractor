@@ -10,6 +10,8 @@ Format (deterministic):
     MATCH=Home - Away
     COMPETITION=...
     KICKOFF=20:45
+    KICKOFF_UTC=2026-10-02T18:45:00.000000Z    (only when known)
+    CAPTURED_UTC=2026-10-02T16:10:05.123456Z   (only when known)
     ODDS_COUNT=N
     ODDS
     FAMILY|MARKET|PERIOD|OWNER|SELECTION|LINE|ODDS|SETTLEMENT
@@ -27,6 +29,9 @@ from __future__ import annotations
 from typing import Any, Iterable, Mapping
 
 HEADER_FIELDS = ("MATCH", "COMPETITION", "KICKOFF")
+# Written only when known: the full kickoff instant and the capture instant
+# (UTC, RFC 3339), so a reader can tell the odds are pre-match and how fresh.
+OPTIONAL_HEADER_FIELDS = ("KICKOFF_UTC", "CAPTURED_UTC")
 COLUMNS = ("FAMILY", "MARKET", "PERIOD", "OWNER", "SELECTION", "LINE", "ODDS", "SETTLEMENT")
 OPTIONAL_FIELDS = ("HANDICAP_KIND", "HANDICAP_TAXONOMY", "PARTICIPANT", "PARTICIPANTS", "SCORER_SCOPE")
 PARTICIPANTS_SEPARATOR = " + "
@@ -86,6 +91,7 @@ def render_llm_odds(header: Mapping[str, Any], records: Iterable[Mapping[str, An
     rows = [expanded for row in rows for expanded in (
         [row] if len(variants[row]) < 2 else [f"{row}|RAW={raw}" for raw in variants[row]])]
     lines = [f"{key}={' '.join(str(header.get(key) or '').split())}" for key in HEADER_FIELDS]
+    lines += [f"{key}={' '.join(str(header[key]).split())}" for key in OPTIONAL_HEADER_FIELDS if header.get(key)]
     if status:
         lines.append(f"DATA_STATUS={status}")
     lines += [f"ODDS_COUNT={len(rows)}", "ODDS", "|".join(COLUMNS), *rows]

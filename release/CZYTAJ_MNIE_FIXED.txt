@@ -1,14 +1,23 @@
-APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20261001_FAST2)
+APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20261002_FAST3)
+
+ZAWSZE NAJNOWSZA WERSJA
+Instaluj tylko paczke z najnowszym znacznikiem (np. FAST3). Stare paczki
+usun - instalator je wskaze i moze przeniesc do Kosza. Wersje widac w oknie
+programu (WERSJA: ...) i w tescie na zywo (wiersz WERSJA).
 
 INSTALACJA (Windows 10/11 x64)
-1. Rozpakuj caly ZIP (np. do Pobrane).
-2. Wejdz do folderu APEX_Context_Engine_FIXED_2026-09-27.
+1. Rozpakuj caly ZIP (np. do Pobrane). Nie uruchamiaj jako Administrator.
+2. Wejdz do folderu APEX_Context_Engine_FAST3 (nazwa zawiera wersje).
 3. Kliknij dwukrotnie INSTALUJ.cmd.
+   - instalator pokaze wersje zainstalowana i nowa; starszej wersji na
+     miejsce nowszej NIE zainstaluje
+   - wypisze stare paczki APEX z Pobranych/Pulpitu i zapyta, czy przeniesc
+     je do Kosza (T + Enter)
    - program zostanie skopiowany do
      %LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
    - na pulpicie pojawi sie skrot "APEX Context Engine - FIXED"
    - program uruchomi sie z tego skrotu, a instalator sprawdzi, ze dziala
-     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20261001_FAST2)
+     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20261002_FAST3)
    - wynik zapisuje sie w INSTALL_REPORT.txt w folderze programu
 4. Jesli Windows SmartScreen pokaze "System Windows ochronil ten komputer",
    wybierz "Wiecej informacji" -> "Uruchom mimo to" (plik nie jest podpisany).
@@ -16,7 +25,7 @@ INSTALACJA (Windows 10/11 x64)
 Mozna tez uruchomic APEX_Context_Engine.exe bezposrednio z rozpakowanego
 folderu (wersja portable) - bez instalacji.
 
-STARA WERSJA
+STARA WERSJA (bez FIXED)
 Nie jest zmieniana ani usuwana. Stary skrot "APEX Context Engine" nadal
 uruchamia poprzedni program. Oba programy zapisuja wyniki w
 %LOCALAPPDATA%\APEX Context Engine (kazdy przebieg w osobnych plikach).
@@ -24,14 +33,36 @@ uruchamia poprzedni program. Oba programy zapisuja wyniki w
 TEST NA ZYWO
 Kliknij dwukrotnie TEST_NA_ZYWO.cmd (w rozpakowanym folderze albo w folderze
 programu), wklej link do meczu przed rozpoczeciem i poczekaj 1-3 minuty.
+Test uruchamia program ze swojego folderu i sprawdza jego wersje.
 Wynik PASS oznacza: ekstrakcja poprawna, pakiet kursow i kontekst to dwa
-rozne, czyste produkty; lista kwarantanny podaje etap i przyczyne.
-PASS Z OSTRZEZENIAMI oznacza: program dziala poprawnie, a kilka ofert bez
-rozpoznanej semantyki (np. nowe karty Top) jest jawnie w kwarantannie z
-podana przyczyna. FAIL oznacza brak strukturalny (niezaladowana zakladka,
-nierozliczone kursy, brudny lub zly produkt).
+rozne, czyste produkty. Sekcja CELOWO POMINIETE to nie sa bledy - to oferty
+bez potwierdzonych zasad rozliczenia Betclic.
+PASS Z OSTRZEZENIAMI oznacza: program dziala poprawnie, ale np. Betclic nie
+pokazal jednej zakladki (PUSTE ZAKLADKI) - reszta danych jest kompletna.
+FAIL oznacza brak strukturalny albo ZLA WERSJA PROGRAMU.
 
 CO NAPRAWIONO
+- (test na zywo Wegry - Gruzja, 2.10) Test wykonal STARY program EXPAND2 z
+  29.09 zamiast najnowszego: kazda wersja rozpakowywala sie do folderu o tej
+  samej nazwie, a instalator bez slowa instalowal starsza wersje na miejsce
+  nowszej. Teraz: folder paczki ma w nazwie wersje; instalator odmawia
+  instalacji starszej wersji i wskazuje stare paczki; program pamieta
+  najnowsza uzyta wersje i starsza pokazuje czerwone ostrzezenie; test na
+  zywo zawsze pokazuje WERSJA i daje FAIL przy zlej wersji.
+- Rynek "Czerwona kartka" (mecz / druzyna) jest rozpoznawany (Tak/Nie,
+  druzyna). Jak "Punkty za kartki" i "Dokladna liczba kartek - druzyna"
+  pozostaje celowo pominiety: regulamin Betclic nie podaje jego okresu.
+- Zakladka konczy sie dopiero, gdy przez 1,2 s nie pojawil sie nowy zaklad
+  (wiersze ladowane z opoznieniem, po rozwinieciu lub przewinieciu nie
+  gina). Zmiana samej ceny nie przedluza skanu, a zostaje najnowsza cena.
+- Pusta zakladka (po czekaniu i ponownym otwarciu) nie blokuje juz
+  kontekstu: wynik CZESCIOWE / PASS Z OSTRZEZENIAMI z nazwa zakladki, pakiet
+  ma wiersz DATA_STATUS=... EMPTY_TABS=<zakladka>.
+- Pakiet kursow ma date meczu i chwile pobrania: KICKOFF_UTC i CAPTURED_UTC
+  (UTC) - widac, ze kursy sa przedmeczowe i jak sa swieze.
+- Czytelne komunikaty typowych awarii: zamknieta przegladarka, drugie okno
+  programu, brak przegladarki, brak internetu.
+- Test na zywo opisuje celowo pominiete oferty zwyklym jezykiem.
 - (test na zywo Bosnia i Hercegowina - Szwecja) Zakladka Strzelcy laduje sie
   z opoznieniem; program konczyl ja po 0,8 s z zerem kursow i wynikiem PASS,
   gubiac wszystkie rynki strzelcow tej zakladki. Teraz pusta zakladka czeka

@@ -10,6 +10,10 @@ from dataclasses import dataclass, field
 from typing import Any
 
 EMPTY_TAB_GRACE_SECONDS = 8.0
+# A tab is complete only after no NEW selection appeared for this long: rows
+# rendered lazily, or revealed by an expander or a scroll, arrive late.  Three
+# quick identical passes (~0.3 s) could end a tab before they did.
+QUIET_SECONDS = 1.2
 MORE_RE = re.compile(r"(?:show|poka.{0,3}|rozwi.{0,3}|more|wi.{0,3})", re.IGNORECASE)
 
 # Player-specific markets (scorer lists, assist lists, pairs/triples of players)
@@ -87,6 +91,18 @@ def raw_signature(item: dict[str, Any]) -> str:
     return "|".join(str(item.get(k, "")).strip().lower() for k in keys)
 
 
+def selection_identity(item: dict[str, Any]) -> str:
+    """raw_signature without the price: a price tick is not a new selection."""
+    native_id = item.get("native_selection_id") or item.get("selection_id")
+    if native_id:
+        return "native:" + str(native_id).strip().lower()
+    keys = (
+        "market_instance_id", "market", "selection", "participant_hint", "section_title",
+        "ancestor_title", "heading_path", "column_heading", "line_hint", "period_hint",
+    )
+    return "|".join(str(item.get(k, "")).strip().lower() for k in keys)
+
+
 def reconcile_active_scroll_containers(manifest: CoverageManifest, snapshot: dict[str, Any]) -> int:
     """Keep only currently active material containers and mark those at both ends."""
     active = {str(box["key"]) for box in snapshot.get("scrolls", [])}
@@ -159,19 +175,28 @@ class ExhaustiveStateCrawler:
 
     def crawl_tab(self, tab_name: str) -> tuple[list[dict[str, Any]], CoverageManifest]:
         manifest, union, stable_passes, capture_no = CoverageManifest(tab_name), {}, 0, 0
+        identities: set[str] = set()
         # Betclic renders some tabs lazily: three quick empty passes ended the
         # Strzelcy tab after 0.8 s with zero rows (live 2026-10-01, Bosnia and
         # Herzegovina - Sweden).  An empty market tab must wait for content.
         started, wait_for_content = time.time(), tab_name.strip().casefold() != "mycombi"
+        last_growth = started
         while time.time() < self.deadline and stable_passes < 3:
-            before, capture_no = len(union), capture_no + 1
+            before, capture_no = len(identities), capture_no + 1
             for raw_record in self.capture(self.page, tab_name):
                 record = dict(raw_record); record.setdefault("capture_id", f"{tab_name}:{capture_no}")
                 record.setdefault("main_tab", tab_name); record.setdefault("subtab", "")
                 record.setdefault("market_group", record.get("market", "")); record.setdefault("ancestor_title", record.get("market", ""))
                 record.setdefault("interaction_state_key", tab_name); record.setdefault("scroll_container_key", "page"); record.setdefault("scroll_position", "")
                 sig = raw_signature(record)
-                if sig: union.setdefault(sig, record); manifest.unique_visible_signatures.add(sig)
+                if sig:
+                    previous = union.get(sig)
+                    # The same native selection re-read at a new price keeps
+                    # the latest price (other signatures already carry the price).
+                    if previous is None or str(previous.get("odds", "")) != str(record.get("odds", "")):
+                        union[sig] = record
+                    manifest.unique_visible_signatures.add(sig)
+                    identities.add(selection_identity(record))
             snap, actionable = self._snapshot(), []
             for control in snap.get("controls", []):
                 key = stable_interaction_key(control, tab_name); manifest.discovered_interactions.add(key)
@@ -199,6 +224,11 @@ class ExhaustiveStateCrawler:
             if scrolled: stable_passes = 0; continue
             if not union and wait_for_content and time.time() - started < EMPTY_TAB_GRACE_SECONDS:
                 stable_passes = 0; time.sleep(.4); continue
-            stable_passes = stable_passes + 1 if len(union) == before else 0
+            if len(identities) != before:
+                last_growth, stable_passes = time.time(), 0
+            else:
+                stable_passes += 1
+                if stable_passes >= 3 and time.time() - last_growth < QUIET_SECONDS:
+                    stable_passes = 2; time.sleep(.2)
         final = self._snapshot(); reconcile_active_scroll_containers(manifest, final); manifest.remaining_closed = sum(c.get("expanded") == "false" and not self._see_more_resolved(c, tab_name, manifest) for c in final.get("controls", [])); manifest.remaining_more = sum(bool(MORE_RE.search(c.get("text", ""))) for c in final.get("controls", []) if not c.get("see_more")); manifest.stabilization_passes = stable_passes; manifest.raw_exported_signatures = set(union); manifest.virtualized_records_union_count = len(union)
         return list(union.values()), manifest

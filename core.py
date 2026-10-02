@@ -24,6 +24,7 @@ from apex_context_engine.llm_format import render_llm_odds
 from exhaustive import ExhaustiveStateCrawler
 from history_contract_v0_1 import (
     build_history_observation,
+    canonicalize_utc_datetime,
     evaluate_capture_status,
     extract_embedded_provider_match_info,
     parse_betclic_route_event_id,
@@ -51,7 +52,10 @@ from parser import (
     _known_not_modeled_settlement,
 )
 
-BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20261001_FAST2"
+BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20261002_FAST3"
+# Monotonic release order (UTC yyyymmddHHMM).  version_guard and the
+# installer compare it with BUILD_INFO.txt BUILD_SEQ / BUILT_AT of older builds.
+BUILD_SEQ = 202610021630
 ACCOUNTING_SCHEMA_VERSION = "2.0"
 SEMANTIC_QUARANTINE_SCHEMA_VERSION = "2.0"
 DEFAULT_TAB_MAX_SECONDS = 60.0
@@ -104,6 +108,43 @@ def validate_betclic_url(url: str) -> tuple[bool, str]:
     if "betclic." not in cleaned.lower():
         return False, "Podany URL nie należy do domeny Betclic."
     return True, ""
+
+
+# Why a capture was refused before any odds were read (pre-match odds only).
+_EVENT_STATUS_MESSAGES = {
+    "LIVE": "Mecz już trwa (na żywo) - program pobiera tylko kursy PRZED meczem. Wybierz mecz, który się jeszcze nie zaczął.",
+    "FT": "Mecz jest zakończony - program pobiera tylko kursy PRZED meczem.",
+    "POSTPONED": "Mecz jest przełożony - Betclic nie prowadzi dla niego normalnej oferty przedmeczowej.",
+    "UNKNOWN": "Nie rozpoznano strony meczu. Wklej link do konkretnego meczu (strona wydarzenia, nie lista meczów).",
+}
+
+_RUNTIME_ERROR_HINTS = (
+    (("processsingleton", "user data directory is already in use", "singletonlock"),
+     "BROWSER_PROFILE_IN_USE",
+     "Przeglądarka programu jest już używana (drugie okno APEX albo niezakończone pobieranie). "
+     "Zamknij inne okna programu i spróbuj ponownie."),
+    (("target page, context or browser has been closed", "browser has been closed", "targetclosederror",
+      "browser closed"),
+     "BROWSER_CLOSED",
+     "Okno przeglądarki zostało zamknięte w trakcie pobierania. Uruchom pobieranie ponownie "
+     "i nie zamykaj okna przeglądarki do końca."),
+    (("executable doesn't exist", "executable doesn\u2019t exist", "failed to launch"),
+     "BROWSER_MISSING",
+     "Nie udało się uruchomić przeglądarki programu. Zainstaluj ponownie najnowszą paczkę."),
+    (("net::err_", "name_not_resolved", "internet_disconnected", "connection_refused"),
+     "NETWORK_ERROR",
+     "Brak połączenia z Betclic. Sprawdź internet i spróbuj ponownie."),
+)
+
+
+def _friendly_runtime_error(exc: BaseException) -> tuple[str, str]:
+    """Map common environment failures to a clear Polish message; keep the raw text."""
+    raw = f"{type(exc).__name__}: {exc}"
+    lowered = raw.casefold()
+    for needles, code, message in _RUNTIME_ERROR_HINTS:
+        if any(needle in lowered for needle in needles):
+            return code, f"{message} (szczegóły: {raw[:200]})"
+    return "UNHANDLED_EXCEPTION", f"Błąd wykonania: {exc}"
 
 
 def _detect_live_event_status(page: Any) -> tuple[bool, str]:
@@ -773,12 +814,17 @@ def partition_semantic_records(rows: list[dict[str, Any]]) -> tuple[list[dict[st
 
 
 def llm_packet(match: str, competition: str, kickoff: str, accepted_odds: list[dict[str, Any]],
-               readiness: dict[str, Any]) -> str:
+               readiness: dict[str, Any], empty_tabs: list[str] | None = None,
+               kickoff_utc: str = "", captured_utc: str = "") -> str:
     """User/LLM odds text: every semantically accepted bet, no technical metadata."""
     complete = (readiness.get("PARSER_TRUTH_STATUS") == "PASS"
                 and readiness.get("ANALYSIS_READY") == "YES")
     status = "" if complete else str(readiness.get("PARSER_TRUTH_STATUS") or "PARTIAL")
-    return render_llm_odds({"MATCH": match, "COMPETITION": competition, "KICKOFF": kickoff},
+    if status and empty_tabs:
+        # Tell the reader which Betclic tab delivered no offers at all.
+        status += " EMPTY_TABS=" + ",".join(empty_tabs)
+    return render_llm_odds({"MATCH": match, "COMPETITION": competition, "KICKOFF": kickoff,
+                            "KICKOFF_UTC": kickoff_utc, "CAPTURED_UTC": captured_utc},
                            accepted_odds, status)
 
 
@@ -2118,7 +2164,8 @@ class BetclicOddsExtractor:
                     self.diag.log(f"HISTORY_V0_1_SIDECAR_WRITE_FAILED: {type(history_exc).__name__}")
                 flush_provider_transport_for_exact_bridge()
                 return {"status": "BLOCKED", "error_code": "EVENT_NOT_PREMATCH",
-                        "error": f"Event status is {preflight_status}", "event_status": preflight_status,
+                        "error": _EVENT_STATUS_MESSAGES.get(preflight_status, f"Event status is {preflight_status}"),
+                        "event_status": preflight_status,
                         "preflight_proof": preflight_proof, "preflight_seconds": preflight_seconds,
                         "packet_text": "", "odds_count": 0, "market_count": 0,
                         "market_group_count": 0, "unresolved_count": 0}
@@ -2569,8 +2616,9 @@ class BetclicOddsExtractor:
             tb_str = traceback.format_exc()
             self.diag.log(f"UNHANDLED_EXCEPTION: {exc}\n{tb_str}")
             write_history_capture_failed()
-            return {"status": "BŁĄD", "error_code": "UNHANDLED_EXCEPTION",
-                    "error": f"Błąd wykonania: {exc}", "packet_text": "",
+            error_code, error_message = _friendly_runtime_error(exc)
+            return {"status": "BŁĄD", "error_code": error_code,
+                    "error": error_message, "packet_text": "",
                     "odds_count": 0, "market_count": 0, "market_group_count": 0, "unresolved_count": 0}
         finally:
             drain_provider_transport_listener()
@@ -2696,8 +2744,10 @@ class BetclicOddsExtractor:
         if not parity_ok: incomplete_reasons.append("VISIBLE_RAW_PARITY")
         if any(m["stabilization_passes"] < 3 for m in core_manifests): incomplete_reasons.append("NOT_STABILIZED")
         # A visible market tab without a single row is never silently complete.
-        if any(report.get("reason") == "EMPTY_TAB" and str(report.get("tab_name") or "").strip().casefold() != "mycombi"
-               for report in tab_reports):
+        empty_main_tabs = [str(report.get("tab_name") or "") for report in tab_reports
+                           if report.get("reason") == "EMPTY_TAB"
+                           and str(report.get("tab_name") or "").strip().casefold() != "mycombi"]
+        if empty_main_tabs:
             incomplete_reasons.append("EMPTY_MAIN_TAB")
         completeness = completeness_breakdown(
             detected_tabs=len(detected_tabs), scanned_tabs=len(scanned_tabs), raw_records=len(raw_before_dedupe),
@@ -2759,8 +2809,10 @@ class BetclicOddsExtractor:
                                        if optional_statistics_count or core_semantic_quarantine_rows else
                                        "FULL_USABLE_EXCLUDING_SOURCE_INCOMPLETE")
 
+        # An empty optional tab (named in empty_tabs) leaves the core markets of
+        # the other tabs intact: it limits FULL_USABLE, not CLEAN_CORE.
         structural_reasons = [reason for reason in incomplete_reasons if reason not in {
-            "PERIOD_UNKNOWN", "PERIOD_LOW_CONFIDENCE", "UNRESOLVED"
+            "PERIOD_UNKNOWN", "PERIOD_LOW_CONFIDENCE", "UNRESOLVED", "EMPTY_MAIN_TAB"
         }]
         clean_core_gate = _evaluate_clean_core_gate(unique_odds, unresolved_items, structural_reasons)
         readiness = _readiness_snapshot(
@@ -3014,7 +3066,13 @@ class BetclicOddsExtractor:
         # packet_text is the internal machine packet: the Context Engine needs
         # its lineage ids and accounting, diagnostics keep the rest.  Users and
         # LLMs get only the bets, natively serialized without any of that.
-        llm_packet_text = llm_packet(match_str, comp_str, kickoff_str, export_odds, readiness)
+        # The embedded kickoff instant belongs to this event only when the page's
+        # match id equals the URL's event id (same rule as the history contract).
+        kickoff_utc = (canonicalize_utc_datetime(embedded_provider_info.get("match_date_utc"))
+                       if route_event_id and embedded_provider_info.get("provider_match_id") == route_event_id
+                       else None) or ""
+        llm_packet_text = llm_packet(match_str, comp_str, kickoff_str, export_odds, readiness, empty_main_tabs,
+                                     kickoff_utc, capture_started_at or "")
         elapsed = round(time.time() - run_start_time, 2)
         self.diag.log(f"Extraction done in {elapsed}s: truth_status={global_truth_status}, ready={analysis_ready}, tabs={scanned_tabs}, markets={market_count}, odds={odds_count}, unresolved={unresolved_count}")
 
@@ -3136,6 +3194,7 @@ class BetclicOddsExtractor:
             "completeness": completeness,
             "coverage_manifest": coverage_manifests,
             "incomplete_reasons": incomplete_reasons,
+            "empty_tabs": empty_main_tabs,
             "scanned_tabs": scanned_tabs,
             "odds": unique_odds,
             "unresolved": unresolved_items,

@@ -8,8 +8,9 @@ from pathlib import Path
 from typing import Any
 
 from context_engine_adapter import run_context_engine
-from core import BetclicOddsExtractor, find_chrome_exe
+from core import BUILD_ID, BUILD_SEQ, BetclicOddsExtractor, find_chrome_exe
 from diagnostics import BASE_DIR, DiagnosticsManager
+from version_guard import check_build
 
 
 def _path(value: Path | None) -> str | None:
@@ -44,22 +45,30 @@ def _product_checks(odds_package: str, context_path: Path | None, output_dir: Pa
     return checks
 
 
-# Reasons that only describe individual offers the parser could not prove.
-# Each such row is quarantined with an explicit reason; the capture itself is
-# complete.  Every other incomplete reason is structural and fails the test.
-CONTENT_ONLY_INCOMPLETE_REASONS = frozenset({"UNRESOLVED", "PERIOD_UNKNOWN", "PERIOD_LOW_CONFIDENCE"})
+# Reasons that only describe individual offers the parser could not prove,
+# or a market tab the source left empty even after waiting and re-opening it
+# (named in empty_tabs; every other tab is complete).  Every other
+# incomplete reason is structural and fails the test.
+CONTENT_ONLY_INCOMPLETE_REASONS = frozenset({"UNRESOLVED", "PERIOD_UNKNOWN", "PERIOD_LOW_CONFIDENCE",
+                                             "EMPTY_MAIN_TAB"})
 
 
 def _verdict(report: dict[str, Any]) -> dict[str, Any]:
     """PASS, PASS_WITH_WARNINGS (explained content quarantine only) or FAIL."""
     structural = sorted(set(report.get("incomplete_reasons") or []) - CONTENT_ONLY_INCOMPLETE_REASONS)
+    if report.get("running_build_outdated"):
+        # An older program than one already used here: its results are not
+        # the current program's results.
+        structural.append("OUTDATED_PROGRAM_VERSION")
     products_ok = (
         int(report.get("odds_count") or 0) > 0
         and report.get("context_status") in {"PASS", "PASS_WITH_QUARANTINE"}
         and report.get("products_distinct") is True
         and report.get("products_clean") is True
     )
-    if products_ok and report.get("extract_status") == "GOTOWE" and not int(report.get("unresolved_count") or 0):
+    if report.get("running_build_outdated"):
+        verdict = "FAIL"
+    elif products_ok and report.get("extract_status") == "GOTOWE" and not int(report.get("unresolved_count") or 0):
         verdict = "PASS"
     elif (products_ok and report.get("extract_status") == "PARTIAL" and not structural
           and report.get("quarantine_explained") is True):
@@ -86,7 +95,12 @@ def run_release_e2e(url: str) -> int:
         "extract_status": "NOT_RUN",
         "context_status": "NOT_RUN",
         "passed": False,
+        "build_id": BUILD_ID,
+        "build_seq": BUILD_SEQ,
     }
+    version = check_build(BUILD_ID, BUILD_SEQ)
+    report.update({"newest_known_build_id": version["newest_build_id"],
+                   "running_build_outdated": bool(version["outdated"])})
     exit_code = 10
     try:
         extraction = BetclicOddsExtractor(
@@ -103,7 +117,7 @@ def run_release_e2e(url: str) -> int:
             "odds_count": extraction.get("odds_count", 0),
             "market_count": extraction.get("market_count", 0),
             "unresolved_count": extraction.get("unresolved_count", 0),
-            "build_id": extraction.get("build_id", ""),
+            "build_id": extraction.get("build_id") or BUILD_ID,
             "incomplete_reasons": list(extraction.get("incomplete_reasons") or []),
             "expanded_market_controls": sum(int(m.get("expanded_controls") or 0)
                                             for m in extraction.get("coverage_manifest") or []),

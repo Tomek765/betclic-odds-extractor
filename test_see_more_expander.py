@@ -113,23 +113,24 @@ class SeeMoreExpanderTest(unittest.TestCase):
     def test_many_expanders_are_opened_in_one_pass_with_correct_targets(self):
         markets = [GRID.replace("grid", f"g{i}").replace("Wynik meczu & oba zespoły strzelą", f"Rynek {i}")
                    for i in range(8)]
-        captures = []
-
-        def counting_capture(page, tab):
-            captures.append(1)
-            return _extract_dom_from_page(page, tab)
-
         page = self.browser.new_page()
         try:
             page.set_content(page_html(*markets), wait_until="domcontentloaded")
-            records, manifest = ExhaustiveStateCrawler(page, counting_capture, time.time() + 30).crawl_tab("Wynik")
+            crawler = ExhaustiveStateCrawler(page, _extract_dom_from_page, time.time() + 30)
+            batches, singles = [], []
+            batch_click, single_click = crawler._click_controls, crawler._click_control
+            crawler._click_controls = lambda indices: (batches.append(list(indices)), batch_click(indices))[1]
+            crawler._click_control = lambda index: (singles.append(index), single_click(index))[1]
+            records, manifest = crawler.crawl_tab("Wynik")
         finally:
             page.close()
         for i in range(8):
             self.assertEqual(len(labels(records, f"Rynek {i}")), 6, i)
         self.assertEqual((manifest.expanded_controls, manifest.remaining_closed), (8, 0))
-        # one-by-one opening would need 8 extra captures on top of the 3 stability passes
-        self.assertLessEqual(len(captures), 6)
+        # All eight expanders in one batch click, none opened one by one (the
+        # quiet-time stability passes that follow do not click anything).
+        self.assertEqual([len(batch) for batch in batches], [8])
+        self.assertEqual(singles, [])
 
     def test_player_markets_keep_their_default_view_and_the_skip_is_reported(self):
         # Live audit Niemcy - Serbia: expanding scorer/pair lists gave 4,160 extra

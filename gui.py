@@ -9,8 +9,20 @@ from tkinter import messagebox, ttk
 from typing import Any
 
 from context_engine_adapter import ContextRunResult, packet_is_ready, run_context_engine
-from core import BUILD_ID, BetclicOddsExtractor, _evaluate_clean_core_gate
+from core import BUILD_ID, BUILD_SEQ, BetclicOddsExtractor, _evaluate_clean_core_gate
 from diagnostics import BASE_DIR, DiagnosticsManager
+from version_guard import check_build, outdated_message
+
+_REASON_TEXT = {
+    "EMPTY_MAIN_TAB": "Betclic nie pokazal zakladki: {tabs} (pozostale dane kompletne - mozesz pobrac ponownie)",
+}
+
+
+def _reason_text(reason: str, result: dict[str, Any]) -> str:
+    template = _REASON_TEXT.get(reason)
+    if not template:
+        return reason
+    return template.format(tabs=", ".join(result.get("empty_tabs") or []) or "?")
 
 
 def _partial_result_details(result: dict[str, Any]) -> dict[str, Any]:
@@ -22,7 +34,7 @@ def _partial_result_details(result: dict[str, Any]) -> dict[str, Any]:
         "odds_count": int(result.get("odds_count", 0) or 0),
         "unknown_count": unknown_count,
         "unresolved_count": unresolved_count,
-        "reason": ", ".join(str(reason) for reason in reasons if reason),
+        "reason": ", ".join(_reason_text(str(reason), result) for reason in reasons if reason),
         "packet_text": result.get("packet_text", ""),
         "llm_packet_text": result.get("llm_packet_text", ""),
     }
@@ -101,6 +113,8 @@ class BetclicExtractorGUI:
                              foreground="#6272a4", background=self.bg_color)
         self.style.configure("SubHeader.TLabel", font=("Segoe UI", 9),
                              foreground="#8b92a5", background=self.bg_color)
+        self.style.configure("Outdated.TLabel", font=("Segoe UI", 10, "bold"),
+                             foreground=self.accent_red, background=self.bg_color)
 
         self.style.configure("Status.TLabel", font=("Segoe UI", 11, "bold"),
                              background=self.card_bg)
@@ -128,7 +142,15 @@ class BetclicExtractorGUI:
         hf.pack(fill="x")
 
         ttk.Label(hf, text="BETCLIC FULL ODDS EXTRACTOR", style="Header.TLabel").pack(anchor="w")
-        ttk.Label(hf, text=f"BUILD: {BUILD_ID}", style="BuildID.TLabel").pack(anchor="w")
+        ttk.Label(hf, text=f"WERSJA: {BUILD_ID}", style="BuildID.TLabel").pack(anchor="w")
+        # An older build than one already used on this computer must never
+        # look like the current program (live 2026-10-02: EXPAND2 ran instead
+        # of the newest release).
+        self.version_check = check_build(BUILD_ID, BUILD_SEQ)
+        if self.version_check["outdated"]:
+            message = outdated_message(self.version_check)
+            ttk.Label(hf, text=message, style="Outdated.TLabel", wraplength=900).pack(anchor="w")
+            self.root.after(500, lambda: messagebox.showwarning("Stara wersja programu", message))
         ttk.Label(
             hf,
             text="Automatyczny ekstraktor pełnej oferty kursowej Betclic — jeden przycisk, pełny skan",
@@ -385,6 +407,13 @@ class BetclicExtractorGUI:
             self._show_packet(details["packet_text"], details["llm_packet_text"])
             self.btn_copy.config(state="normal")
             self._refresh_context_button()
+        elif result.get("error_code") == "EVENT_NOT_PREMATCH":
+            # Not a program failure: the event is live, finished or postponed.
+            self.lbl_status.config(text="ZABLOKOWANE / NIE PRZEDMECZOWY", foreground=self.accent_orange)
+            err = result.get("error", "Mecz nie jest przedmeczowy.")
+            self.lbl_status_msg.config(text=err[:180])
+            self.progress["value"] = 0
+            messagebox.showwarning("Mecz nie jest przedmeczowy", err)
         else:
             self.lbl_status.config(text="BŁĄD", foreground=self.accent_red)
             err = result.get("error", "Błąd podczas pobierania.")

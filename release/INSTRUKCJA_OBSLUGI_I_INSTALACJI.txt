@@ -1,6 +1,21 @@
 ﻿APEX CONTEXT ENGINE — INSTRUKCJA INSTALACJI I OBSŁUGI
-Wersja: APEX_CONTEXT_ENGINE_FIXED_20261001_FAST2
+Wersja: APEX_CONTEXT_ENGINE_FIXED_20261002_FAST3
 System: Windows 10 / 11, 64-bit
+
+======================================================================
+0. NAJWAŻNIEJSZE — ZAWSZE NAJNOWSZA WERSJA
+======================================================================
+Każda wersja ma w nazwie swój znacznik (np. FAST3). Instaluj i testuj
+tylko paczkę z NAJNOWSZYM znacznikiem. Stare paczki (np. EXPAND2, EXPAND6,
+FAST2) usuń — instalator FAST3 sam je wskaże i może przenieść do Kosza.
+
+Jak sprawdzić, która wersja działa:
+  - okno programu: napis „WERSJA: …” pod tytułem (i w pasku tytułu),
+  - test na żywo: wiersz „WERSJA”.
+Od wersji FAST3 program pamięta najnowszą wersję użytą na tym komputerze.
+Jeśli uruchomi się starsza, okno pokaże czerwone ostrzeżenie, a test na
+żywo da FAIL z napisem „ZŁA WERSJA PROGRAMU”. Instalator FAST3 odmówi
+zainstalowania starszej wersji na miejsce nowszej.
 
 ======================================================================
 1. CO ROBI PROGRAM
@@ -23,53 +38,58 @@ Przeglądarka (Chromium) jest dołączona.
 ======================================================================
   INSTRUKCJA_OBSLUGI_I_INSTALACJI.txt   — ten plik
   SUMY_KONTROLNE_SHA256.txt             — sumy kontrolne plików
-  APEX_Context_Engine_FIXED_2026-09-27\ — GOTOWY PROGRAM
+  APEX_Context_Engine_FAST3\            — GOTOWY PROGRAM (nazwa = wersja)
       APEX_Context_Engine.exe           — program
       _internal\                        — biblioteki i przeglądarka (nie ruszać)
       INSTALUJ.cmd                      — instalator (dwuklik)
       TEST_NA_ZYWO.cmd                  — test na żywo (dwuklik)
       CZYTAJ_MNIE_FIXED.txt             — lista poprawek
-      BUILD_INFO.txt                    — dane buildu i SHA-256 pliku EXE
+      BUILD_INFO.txt                    — wersja, data buildu, SHA-256 pliku EXE
   KOD_ZRODLOWY\                         — pełny kod źródłowy i testy
                                           (tylko do rozwoju; do używania
                                           programu NIE jest potrzebny)
 
-Uwaga: data „2026-09-27” w nazwie folderu to nazwa linii wydań FIXED.
-Zawartość to aktualna wersja FAST2 z 01.10.2026.
-
 ======================================================================
-3. PRZENIESIENIE NA INNY KOMPUTER — INSTALACJA
+3. INSTALACJA (TEN SAM LUB INNY KOMPUTER)
 ======================================================================
 Wymagania: Windows 10/11 64-bit, internet, ok. 600 MB wolnego miejsca.
 Uprawnienia administratora NIE są potrzebne (instalacja dla bieżącego
-użytkownika).
+użytkownika) — nie uruchamiaj jako Administrator.
 
-Krok 1. Skopiuj plik ZIP na nowy komputer (pendrive, dysk, chmura).
+Krok 1. Jeśli paczka przyszła w częściach: pobierz wszystkie części
+        i plik ZLOZ_ZIP_<wersja>.cmd do jednego folderu i uruchom
+        ZLOZ_ZIP_<wersja>.cmd (zielone „OK” = ZIP jest kompletny).
 Krok 2. Kliknij ZIP prawym przyciskiem → „Wyodrębnij wszystkie…” →
         „Wyodrębnij”. Nie uruchamiaj niczego z wnętrza ZIP-a bez
         rozpakowania.
-Krok 3. Wejdź do folderu APEX_Context_Engine_FIXED_2026-09-27.
+Krok 3. Wejdź do folderu APEX_Context_Engine_FAST3 (nazwa zawiera wersję).
 Krok 4. Kliknij dwukrotnie INSTALUJ.cmd.
         - Jeśli pojawi się „System Windows ochronił ten komputer”
           (SmartScreen): „Więcej informacji” → „Uruchom mimo to”.
           Program nie ma podpisu cyfrowego wydawcy — to normalne.
-        - Instalator kopiuje program do:
+        - Instalator pokazuje wersję obecnie zainstalowaną i nową.
+          Starszej wersji na miejsce nowszej NIE zainstaluje.
+        - Jeśli w Pobranych lub na Pulpicie są stare paczki APEX,
+          wypisze je i zapyta, czy przenieść je do Kosza (T + Enter).
+          Zalecane: T.
+        - Kopiuje program do:
             %LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
+          (ten sam folder dla każdej wersji — skrót się nie zmienia),
         - tworzy na pulpicie skrót „APEX Context Engine - FIXED”,
         - uruchamia program ze skrótu i sprawdza, że w tytule okna jest
-          APEX_CONTEXT_ENGINE_FIXED_20261001_FAST2,
+          APEX_CONTEXT_ENGINE_FIXED_20261002_FAST3,
         - na końcu wypisuje INSTALL_STATUS=PASS (zapisane też w
           INSTALL_REPORT.txt w folderze programu).
 Krok 5. Naciśnij Enter, aby zamknąć okno instalatora. Program zostaje
         otwarty.
 
-Wersja przenośna (bez instalacji): można też po prostu uruchomić
+Wersja przenośna (bez instalacji): można też uruchomić
 APEX_Context_Engine.exe z rozpakowanego folderu. Nie wyjmuj samego pliku
 EXE z folderu — potrzebuje katalogu _internal obok siebie.
 
-Ponowna instalacja / aktualizacja: uruchom INSTALUJ.cmd z nowej paczki.
-Poprzednia wersja FIXED zostanie zastąpiona. Inne programy i starsza
-wersja „APEX Context Engine” (bez FIXED) nie są ruszane.
+Aktualizacja: uruchom INSTALUJ.cmd z NOWEJ paczki. Poprzednia wersja
+FIXED zostanie zastąpiona. Starsza wersja „APEX Context Engine” (bez
+FIXED) nie jest ruszana.
 
 Odinstalowanie: zamknij program, usuń folder
 %LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
@@ -79,34 +99,37 @@ można usunąć osobno.
 (Aby wpisać %LOCALAPPDATA%: Win+R → wklej ścieżkę → Enter.)
 
 ======================================================================
-4. PIERWSZE URUCHOMIENIE — TEST SPRAWDZAJĄCY
+4. TEST SPRAWDZAJĄCY (PO KAŻDEJ INSTALACJI)
 ======================================================================
-Zalecane zaraz po instalacji na nowym komputerze:
-
 1. Wybierz na Betclic.pl mecz piłki nożnej, który zaczyna się za co
    najmniej 30 minut, i skopiuj link do jego strony (adres z paska
    przeglądarki, np. https://www.betclic.pl/pilka-nozna-sfootball/...).
-2. Kliknij dwukrotnie TEST_NA_ZYWO.cmd (w folderze programu).
+2. Kliknij dwukrotnie TEST_NA_ZYWO.cmd — w folderze tej paczki albo
+   w folderze zainstalowanego programu. Test zawsze uruchamia program
+   ze SWOJEGO folderu i sprawdza, czy to ta sama wersja co paczka.
 3. Wklej link, naciśnij Enter. Otworzy się okno przeglądarki — nie
    zamykaj go. Test trwa 1–3 minuty.
 4. Wynik:
      PASS                  — wszystko działa.
-     PASS Z OSTRZEŻENIAMI  — działa; część ofert jest w jawnej kwarantannie
-                             z podaną przyczyną.
-     FAIL                  — problem strukturalny (patrz punkt 8).
-                             Pole PUSTE ZAKŁADKI wymienia zakładki, które
-                             mimo ponownego otwarcia nie pokazały kursów —
-                             uruchom test ponownie.
-   Sprawdź, że WERSJA = APEX_CONTEXT_ENGINE_FIXED_20261001_FAST2,
+     PASS Z OSTRZEŻENIAMI  — program działa; np. Betclic nie pokazał jednej
+                             zakładki (pole PUSTE ZAKŁADKI) mimo czekania
+                             i ponownego otwarcia — reszta danych jest
+                             kompletna. Można powtórzyć test.
+     FAIL                  — problem strukturalny albo ZŁA WERSJA PROGRAMU
+                             (patrz punkt 8).
+   Sprawdź, że WERSJA = APEX_CONTEXT_ENGINE_FIXED_20261002_FAST3,
    NIEROZWIĄZANE = 0 i NIEROZWINIĘTE = 0.
-   KURSY (zaakceptowane) liczy każdą kopię zakładu z każdej zakładki;
+   KURSY (wszystkie kopie) liczy każdą kopię zakładu z każdej zakładki;
    KURSY W PAKIECIE to unikalne zakłady (ta sama oferta pokazana w kilku
    zakładkach jest w pakiecie jednym wierszem).
+   Sekcja CELOWO POMINIĘTE to NIE są błędy — patrz punkt 7.
 
 ======================================================================
 5. CODZIENNA OBSŁUGA (OKNO PROGRAMU)
 ======================================================================
-1. Uruchom skrót „APEX Context Engine - FIXED”.
+1. Uruchom skrót „APEX Context Engine - FIXED”. Pod tytułem widać
+   „WERSJA: …”. Czerwony napis „UWAGA: uruchomiona jest STARSZA wersja”
+   oznacza, że trzeba zainstalować najnowszą paczkę.
 2. W polu „WKLEJ LINK BETCLIC:” wklej link do konkretnego meczu
    (strona wydarzenia, nie lista meczów ligi).
 3. Kliknij „▶ POBIERZ WSZYSTKIE KURSY”.
@@ -116,13 +139,15 @@ Zalecane zaraz po instalacji na nowym komputerze:
    - Trwa to zwykle 1,5–3 minuty.
 4. Status końcowy:
      GOTOWE / FULL USABLE   — pełny, poprawny pakiet. Można używać.
-     CZĘŚCIOWE              — część oferty się nie wczytała/rozwinęła.
-                              Uruchom ponownie.
+     CZĘŚCIOWE              — część oferty się nie wczytała/rozwinęła
+                              (powód jest napisany obok). Pakiet i kontekst
+                              rdzenia są dostępne; najlepiej pobrać ponownie.
      ZABLOKOWANE / JAKOŚĆ   — mecz trwa, zakończony, przełożony albo dane
                               niepewne. Nie używaj do analizy.
      BŁĄD                   — patrz punkt 8.
 5. „📋 KOPIUJ PAKIET” — kopiuje czysty pakiet kursów do schowka
-   (wklej do analizy Ctrl+V).
+   (wklej do analizy Ctrl+V). Jeśli pakiet zawiera wiersz DATA_STATUS,
+   dane są niepełne (np. EMPTY_TABS=Strzelcy — brak tej zakładki).
 6. „ZBUDUJ KONTEKST RYNKU” — buduje i kopiuje raport kontekstu.
    Status: CONTEXT: READY (gotowe) lub CONTEXT: BLOCKED (dane nie
    nadają się do kontekstu).
@@ -146,26 +171,39 @@ Test na żywo zapisuje wyniki w osobnym folderze:
 Najważniejsze pliki:
   APEX_ODDS_PACKAGE.txt             — pakiet kursów (do analizy)
   APEX_CONTEXT_REPORT.txt           — kontekst rynku
-  APEX_QUARANTINE_DIAGNOSTICS.json  — lista zakładów w kwarantannie
+  APEX_QUARANTINE_DIAGNOSTICS.json  — lista celowo pominiętych zakładów
                                       z przyczyną i fragmentem źródła
   APEX_SOURCE_PACKET.txt            — pełny zapis techniczny (diagnostyka)
   SELF_TEST_RESULT.json             — wynik testu na żywo
 
 ======================================================================
-7. KWARANTANNA — CO OZNACZA
+7. CELOWO POMINIĘTE ZAKŁADY (KWARANTANNA) — TO NIE SĄ BŁĘDY
 ======================================================================
-Program nigdy nie wyrzuca kursów po cichu. Zakład, którego znaczenia
-(okresu lub rozliczenia) nie da się jednoznacznie potwierdzić, trafia
-do kwarantanny — jest wymieniony z przyczyną, ale nie trafia do pakietu.
+Program nigdy nie wyrzuca kursów po cichu. Zakład, którego zasad
+rozliczenia (okresu lub wypłaty) Betclic nie potwierdza, jest celowo
+pominięty: wymieniony z przyczyną, ale nie trafia do pakietu, żeby
+analiza nie opierała się na zgadywaniu.
 
-Typowe (zamierzone) przyczyny:
+Typowe przyczyny:
   UNCONFIRMED_XTRA_PAYOUT_CONTRACT     — rynki „Xtra Wygrana” (zasady
-                                         wypłaty nieustalone).
-  UNCONFIRMED_MARKET_SETTLEMENT        — np. „<drużyna> - Inny wynik”,
-                                         „Remis” w „Dokładny wynik w grupie”.
-  UNCONFIRMED_MARKET_PERIOD            — rynki bez jasnego okresu, np. okna
-                                         „00:00 - 14:59”, Gol Głową, Hat-trick.
-  UNSUPPORTED_OPTIONAL_STATISTICS_PERIOD — statystyki OPTA.
+                                         wypłaty nieopublikowane).
+  UNCONFIRMED_MARKET_SETTLEMENT        — opcje zależne od innych, np.
+                                         „<drużyna> - Inny wynik”, „Remis”
+                                         w „Dokładny wynik w grupie”.
+  UNCONFIRMED_MARKET_PERIOD            — rynki bez określonego czasu, np.
+                                         okna „00:00 - 14:59” (Fast),
+                                         Gol Głową, Hat-trick,
+                                         Bramka rezerwowego.
+  UNCONFIRMED_PLAYER_PROP_PERIOD       — rynki zawodników bez określonego
+                                         czasu (np. karty Fast).
+  UNSUPPORTED_OPTIONAL_STATISTICS_PERIOD — statystyki bez określonego
+                                         czasu (np. OPTA, punkty za kartki,
+                                         czerwona kartka).
+Rynki kartek: „Liczba kartek”, „Więcej kartek” i „Kartki - drużyna” są
+przyjmowane (regulamin Betclic: czas regulaminowy). „Punkty za kartki”,
+„Dokładna liczba kartek - drużyna”, „Pierwszy zespół który otrzyma
+kartkę” i „Czerwona kartka” są pomijane, bo regulamin nie podaje dla nich
+okresu rozliczenia.
 
 Rynki zawodników (strzelcy, pary graczy) są pobierane w widoku
 domyślnym Betclic — celowo, bo pełne listy to tysiące zakładów.
@@ -173,21 +211,31 @@ domyślnym Betclic — celowo, bo pełne listy to tysiące zakładów.
 ======================================================================
 8. ROZWIĄZYWANIE PROBLEMÓW
 ======================================================================
+- „ZŁA WERSJA PROGRAMU” w teście albo czerwone „STARSZA wersja” w oknie:
+  uruchomiony jest stary program. Zainstaluj najnowszą paczkę
+  (INSTALUJ.cmd z folderu z najnowszym znacznikiem) i usuń stare paczki.
+- Instalator: „Zainstalowana jest NOWSZA wersja”: uruchomiłeś instalator
+  ze starej paczki. Użyj najnowszej.
+- Stary instalator (EXPAND…, FAST1, FAST2) pokazuje „Folder … istnieje
+  i nie zawiera buildu FIXED - nie nadpisuje”: to ochrona — wersja FAST3
+  i nowsze nie dają się nadpisać starą paczką. Użyj najnowszej paczki
+  i usuń stare.
 - SmartScreen / antywirus blokuje program: „Więcej informacji” →
   „Uruchom mimo to”; ewentualnie dodaj folder programu do wyjątków
   antywirusa.
-- „Uruchom instalator z ROZPAKOWANEGO folderu”: najpierw rozpakuj ZIP
+- „Uruchom INSTALUJ.cmd z ROZPAKOWANEGO folderu”: najpierw rozpakuj ZIP
   (punkt 3, krok 2).
 - „Folder ... istnieje i nie zawiera buildu FIXED”: w folderze docelowym
   jest coś innego — usuń go ręcznie albo zmień nazwę i powtórz instalację.
 - Przeglądarka pokazuje stronę ochronną / cookies / brak treści: zamknij
   program, sprawdź internet, zaakceptuj cookies i uruchom ponownie.
 - Status ZABLOKOWANE: mecz już trwa lub link nie jest stroną meczu.
-- Status CZĘŚCIOWE lub test FAIL: uruchom ponownie. Jeśli się powtarza,
-  zachowaj zrzut ekranu i pliki z punktu 6 (szczególnie
-  SELF_TEST_RESULT.json, APEX_QUARANTINE_DIAGNOSTICS.json,
-  APEX_SOURCE_PACKET.txt) — na ich podstawie można zdiagnozować zmianę
-  po stronie Betclic.
+- PUSTE ZAKŁADKI / status CZĘŚCIOWE: Betclic nie pokazał części oferty
+  mimo czekania i ponownego otwarcia — pobierz ponownie.
+- Test FAIL: uruchom ponownie. Jeśli się powtarza, zachowaj zrzut ekranu
+  i pliki z punktu 6 (szczególnie SELF_TEST_RESULT.json,
+  APEX_QUARANTINE_DIAGNOSTICS.json, APEX_SOURCE_PACKET.txt) — na ich
+  podstawie można zdiagnozować zmianę po stronie Betclic.
 
 ======================================================================
 9. KOD ŹRÓDŁOWY (DLA ROZWOJU — NIEPOTRZEBNY DO UŻYWANIA)

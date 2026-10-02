@@ -38,14 +38,18 @@ $ErrorActionPreference = "Stop"
 
 $ReleaseName   = "APEX_Context_Engine_FIXED_2026-09-27"
 $ShortcutName  = "APEX Context Engine - FIXED"
-$ExpectedBuild = "APEX_CONTEXT_ENGINE_FIXED_20261001_FAST2"
+$ExpectedBuild = "APEX_CONTEXT_ENGINE_FIXED_20261002_FAST3"
 $RequiredCommit = "5d34ec2"
 $Repo = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 if (-not $OutputRoot) {
     if (Test-Path "D:\") { $OutputRoot = "D:\" } else { $OutputRoot = [Environment]::GetFolderPath("UserProfile") }
 }
-$Target   = Join-Path $OutputRoot $ReleaseName
-$Zip      = Join-Path $OutputRoot "$ReleaseName.zip"
+# Every release extracts to its own versioned folder; the install folder
+# ($ReleaseName under %LOCALAPPDATA%\Programs) stays the same.  Identical
+# package folder names let an old package be installed by mistake (2026-10-02).
+$PackageName = "APEX_Context_Engine_" + ($ExpectedBuild -split "_")[-1]
+$Target   = Join-Path $OutputRoot $PackageName
+$Zip      = Join-Path $OutputRoot "$PackageName.zip"
 $Exe      = Join-Path $Target "APEX_Context_Engine.exe"
 $Desktop  = [Environment]::GetFolderPath("Desktop")
 $Lnk      = Join-Path $Desktop "$ShortcutName.lnk"
@@ -183,7 +187,12 @@ $Report["WINDOWS_BUILD"] = "PASS"
 
 Step "5. New release folder"
 Copy-Item $Dist $Target -Recurse
-Copy-Item (Join-Path $BuildSrc "release\INSTRUKCJA_OBSLUGI_I_INSTALACJI.txt") $Target
+foreach ($name in @("INSTRUKCJA_OBSLUGI_I_INSTALACJI.txt", "CZYTAJ_MNIE_FIXED.txt", "INSTALUJ.cmd",
+                    "Instaluj-APEX-FIXED.ps1", "TEST_NA_ZYWO.cmd", "Test-Na-Zywo.ps1")) {
+    Copy-Item (Join-Path $BuildSrc "release\$name") $Target
+}
+$buildSeq = Select-String -Path (Join-Path $BuildSrc "core.py") -Pattern '^BUILD_SEQ = (\d{12})' | ForEach-Object { $_.Matches[0].Groups[1].Value }
+if (-not $buildSeq) { Fail "BUILD_SEQ_MISSING_IN_CORE" }
 $junk = Get-ChildItem $Target -Recurse -Force | Where-Object {
     $_.Name -in @(".git", "__pycache__", ".pytest_cache", "diagnostics", "snapshots", "logs") -or $_.Name -like "*.log" -or $_.Name -like "test_*.py"
 }
@@ -191,7 +200,10 @@ if ($junk) { Fail "RELEASE_CONTAINS_DEV_ARTIFACTS:$(($junk | Select-Object -Firs
 $ExeHash = (Get-FileHash $Exe -Algorithm SHA256).Hash
 @(
     "APEX Context Engine - FIXED build",
-    "BUILD_ID=$ExpectedBuild",
+    # BUILD_TAG, never the full id: older installers overwrite an installed
+    # folder only when BUILD_INFO.txt contains "APEX_CONTEXT_ENGINE_FIXED_".
+    "BUILD_TAG=$(($ExpectedBuild -split '_', 5)[-1])",
+    "BUILD_SEQ=$buildSeq",
     "GIT_BRANCH=$branch",
     "GIT_COMMIT=$head",
     "EXE_SHA256=$ExeHash",
@@ -205,11 +217,11 @@ Step "6. ZIP"
 Compress-Archive -Path $Target -DestinationPath $Zip -CompressionLevel Optimal
 $ZipCheck = Join-Path $Work "zipcheck"
 Expand-Archive $Zip $ZipCheck
-$zipExe = Join-Path $ZipCheck "$ReleaseName\APEX_Context_Engine.exe"
+$zipExe = Join-Path $ZipCheck "$PackageName\APEX_Context_Engine.exe"
 if (-not (Test-Path $zipExe)) { Fail "ZIP_EXE_NOT_AT_EXPECTED_PATH" }
 if ((Get-FileHash $zipExe -Algorithm SHA256).Hash -ne $ExeHash) { Fail "ZIP_EXE_HASH_MISMATCH" }
 $srcCount = @(Get-ChildItem $Target -Recurse -File).Count
-$zipCount = @(Get-ChildItem (Join-Path $ZipCheck $ReleaseName) -Recurse -File).Count
+$zipCount = @(Get-ChildItem (Join-Path $ZipCheck $PackageName) -Recurse -File).Count
 if ($srcCount -ne $zipCount) { Fail "ZIP_FILE_COUNT_MISMATCH:$srcCount/$zipCount" }
 $Report["ZIP_SHA256"] = (Get-FileHash $Zip -Algorithm SHA256).Hash
 $Report["ZIP_VERIFIED"] = "PASS ($zipCount files, EXE hash equal)"

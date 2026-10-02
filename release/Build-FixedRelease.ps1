@@ -38,7 +38,7 @@ $ErrorActionPreference = "Stop"
 
 $ReleaseName   = "APEX_Context_Engine_FIXED_2026-09-27"
 $ShortcutName  = "APEX Context Engine - FIXED"
-$ExpectedBuild = "APEX_CONTEXT_ENGINE_FIXED_20261002_FAST4"
+$ExpectedBuild = "APEX_CONTEXT_ENGINE_FIXED_20261002_FAST5"
 $RequiredCommit = "5d34ec2"
 $Repo = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 if (-not $OutputRoot) {

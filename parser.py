@@ -137,7 +137,37 @@ def recover_headerless_top_offer(selection: str, tab_name: str,
     first_team = re.fullmatch(r"(.+?) strzeli pierwszego gola w meczu", source, re.IGNORECASE)
     if first_team and exact_team(first_team.group(1)):
         return {"market_title": "Kto zdobędzie pierwszą bramkę w meczu", "raw_selection": first_team.group(1)}
-    shots = re.fullmatch(r"(.+?) (powyżej|poniżej) (\d+(?:[.,]\d+)?) celnych strzałów na bramkę \(OPTA\)", source, re.IGNORECASE)
+    def mentions_team(value: str) -> bool:
+        text = _semantic_text(value)
+        return any(team and _semantic_text(team) in text for team in (home_team, away_team))
+
+    # Plain match outcomes in Top card wording (same closed team identity).
+    match_winner = re.fullmatch(r"(.+?) wygra mecz", source, re.IGNORECASE)
+    if match_winner and exact_team(match_winner.group(1)):
+        return {"market_title": "Wynik meczu", "raw_selection": match_winner.group(1)}
+    if re.fullmatch(r"Remis w meczu", source, re.IGNORECASE):
+        return {"market_title": "Wynik meczu", "raw_selection": "Remis"}
+    half_winner = re.fullmatch(r"(.+?) wygra (pierwszą|drugą) połowę meczu", source, re.IGNORECASE)
+    if half_winner and exact_team(half_winner.group(1)):
+        half = "1" if half_winner.group(2).casefold() == "pierwszą" else "2"
+        return {"market_title": f"Wynik meczu - {half}. połowa", "raw_selection": half_winner.group(1)}
+    if re.fullmatch(r"Obie drużyny strzelą gola(?: w meczu)?", source, re.IGNORECASE):
+        return {"market_title": "Obie drużyny strzelą", "raw_selection": "Tak"}
+    team_scores = re.fullmatch(r"(.+?) strzeli gola w meczu", source, re.IGNORECASE)
+    if team_scores and exact_team(team_scores.group(1)):
+        return {"market_title": f"{team_scores.group(1)} - liczba goli w meczu", "raw_selection": "Powyżej 0,5"}
+    # Observed live 2026-10-02 (Francja - Wlochy Top cards), also without "(OPTA)".
+    win_to_nil = re.fullmatch(r"(.+?) wygra mecz bez straty gola", source, re.IGNORECASE)
+    if win_to_nil and exact_team(win_to_nil.group(1)):
+        return {"market_title": f"Zwycięstwo do zera - {win_to_nil.group(1)}", "raw_selection": "Tak"}
+    half_scorer = re.fullmatch(r"(.+?) strzeli gola w (pierwszej|drugiej) połowie meczu", source, re.IGNORECASE)
+    if half_scorer and named_person(half_scorer.group(1)) and not mentions_team(half_scorer.group(1)):
+        half = "1" if half_scorer.group(2).casefold() == "pierwszej" else "2"
+        return {"market_title": f"Strzelec - {half}. połowa", "raw_selection": half_scorer.group(1)}
+    match_scorer = re.fullmatch(r"(.+?) strzeli gola w meczu", source, re.IGNORECASE)
+    if match_scorer and named_person(match_scorer.group(1)) and not mentions_team(match_scorer.group(1)):
+        return {"market_title": "Strzelec", "raw_selection": match_scorer.group(1)}
+    shots = re.fullmatch(r"(.+?) (powyżej|poniżej) (\d+(?:[.,]\d+)?) celnych strzałów na bramkę(?: \(OPTA\))?", source, re.IGNORECASE)
     if shots and named_person(shots.group(1)):
         return {"market_title": "Liczba celnych strzałów zawodnika",
                 "raw_selection": f"{shots.group(2)} {shots.group(3)}", "participant_hint": shots.group(1)}
@@ -768,6 +798,11 @@ def classify_family(market_title: str, selection: str, section_title: str,
         "tak", "nie", "yes", "no",
     }:
         return "TEAM_WIN_TO_NIL", ""
+    # Recovered Top card "<team> wygra mecz bez straty gola" names its team.
+    if semantic_title.startswith("zwyciestwo do zera - ") and semantic_selection in {"tak", "nie", "yes", "no"}:
+        owner = explicit_team_owner()
+        if owner:
+            return "TEAM_WIN_TO_NIL", owner
 
     # Result + BTTS is a known, binary compound proposition.  It is not used by
     # the pricing model, but the title itself proves its settlement domain, so

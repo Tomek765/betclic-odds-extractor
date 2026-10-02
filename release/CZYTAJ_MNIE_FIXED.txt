@@ -1,13 +1,13 @@
-APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20261002_FAST4)
+APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20261002_FAST5)
 
 ZAWSZE NAJNOWSZA WERSJA
-Instaluj tylko paczke z najnowszym znacznikiem (np. FAST4). Stare paczki
+Instaluj tylko paczke z najnowszym znacznikiem (np. FAST5). Stare paczki
 usun - instalator je wskaze i moze przeniesc do Kosza. Wersje widac w oknie
 programu (WERSJA: ...) i w tescie na zywo (wiersz WERSJA).
 
 INSTALACJA (Windows 10/11 x64)
 1. Rozpakuj caly ZIP (np. do Pobrane). Nie uruchamiaj jako Administrator.
-2. Wejdz do folderu APEX_Context_Engine_FAST4 (nazwa zawiera wersje).
+2. Wejdz do folderu APEX_Context_Engine_FAST5 (nazwa zawiera wersje).
 3. Kliknij dwukrotnie INSTALUJ.cmd.
    - instalator pokaze wersje zainstalowana i nowa; starszej wersji na
      miejsce nowszej NIE zainstaluje
@@ -17,7 +17,7 @@ INSTALACJA (Windows 10/11 x64)
      %LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
    - na pulpicie pojawi sie skrot "APEX Context Engine - FIXED"
    - program uruchomi sie z tego skrotu, a instalator sprawdzi, ze dziala
-     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20261002_FAST4)
+     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20261002_FAST5)
    - wynik zapisuje sie w INSTALL_REPORT.txt w folderze programu
 4. Jesli Windows SmartScreen pokaze "System Windows ochronil ten komputer",
    wybierz "Wiecej informacji" -> "Uruchom mimo to" (plik nie jest podpisany).
@@ -42,6 +42,11 @@ pokazal jednej zakladki (PUSTE ZAKLADKI) - reszta danych jest kompletna.
 FAIL oznacza brak strukturalny albo ZLA WERSJA PROGRAMU.
 
 CO NAPRAWIONO
+- (FAST5) Karty Top bez naglowka z meczu Francja - Wlochy ("wygra mecz bez
+  straty gola", "strzeli gola w drugiej polowie meczu", celne strzaly bez
+  "(OPTA)") oraz proste karty wyniku ("wygra mecz", "Remis w meczu",
+  "Obie druzyny strzela gola", "strzeli gola w meczu") sa rozpoznawane -
+  ekstrakcja nie konczy sie juz na PARTIAL z ich powodu.
 - (FAST4, wersja finalna) Zakladka MyCombi (kreator kombinacji, nigdy nie
   miala kursow) nie jest juz skanowana - oszczednosc do 13 s.
 - Dlugie zakladki (Statystyki, Strzelcy, Gole) sa przewijane wiekszym

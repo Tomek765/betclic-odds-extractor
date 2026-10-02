@@ -1,13 +1,13 @@
 ﻿APEX CONTEXT ENGINE — INSTRUKCJA INSTALACJI I OBSŁUGI
-Wersja: APEX_CONTEXT_ENGINE_FIXED_20261002_FAST4
+Wersja: APEX_CONTEXT_ENGINE_FIXED_20261002_FAST5
 System: Windows 10 / 11, 64-bit
 
 ======================================================================
 0. NAJWAŻNIEJSZE — ZAWSZE NAJNOWSZA WERSJA
 ======================================================================
-Każda wersja ma w nazwie swój znacznik (np. FAST4). Instaluj i testuj
+Każda wersja ma w nazwie swój znacznik (np. FAST5). Instaluj i testuj
 tylko paczkę z NAJNOWSZYM znacznikiem. Stare paczki (np. EXPAND2, EXPAND6,
-FAST2, FAST3) usuń — instalator sam je wskaże i może przenieść do Kosza.
+FAST2, FAST3, FAST4) usuń — instalator sam je wskaże i może przenieść do Kosza.
 
 Jak sprawdzić, która wersja działa:
   - okno programu: napis „WERSJA: …” pod tytułem (i w pasku tytułu),
@@ -38,7 +38,7 @@ Przeglądarka (Chromium) jest dołączona.
 ======================================================================
   INSTRUKCJA_OBSLUGI_I_INSTALACJI.txt   — ten plik
   SUMY_KONTROLNE_SHA256.txt             — sumy kontrolne plików
-  APEX_Context_Engine_FAST4\            — GOTOWY PROGRAM (nazwa = wersja)
+  APEX_Context_Engine_FAST5\            — GOTOWY PROGRAM (nazwa = wersja)
       APEX_Context_Engine.exe           — program
       _internal\                        — biblioteki i przeglądarka (nie ruszać)
       INSTALUJ.cmd                      — instalator (dwuklik)
@@ -62,7 +62,7 @@ Krok 1. Jeśli paczka przyszła w częściach: pobierz wszystkie części
 Krok 2. Kliknij ZIP prawym przyciskiem → „Wyodrębnij wszystkie…” →
         „Wyodrębnij”. Nie uruchamiaj niczego z wnętrza ZIP-a bez
         rozpakowania.
-Krok 3. Wejdź do folderu APEX_Context_Engine_FAST4 (nazwa zawiera wersję).
+Krok 3. Wejdź do folderu APEX_Context_Engine_FAST5 (nazwa zawiera wersję).
 Krok 4. Kliknij dwukrotnie INSTALUJ.cmd.
         - Jeśli pojawi się „System Windows ochronił ten komputer”
           (SmartScreen): „Więcej informacji” → „Uruchom mimo to”.
@@ -77,7 +77,7 @@ Krok 4. Kliknij dwukrotnie INSTALUJ.cmd.
           (ten sam folder dla każdej wersji — skrót się nie zmienia),
         - tworzy na pulpicie skrót „APEX Context Engine - FIXED”,
         - uruchamia program ze skrótu i sprawdza, że w tytule okna jest
-          APEX_CONTEXT_ENGINE_FIXED_20261002_FAST4,
+          APEX_CONTEXT_ENGINE_FIXED_20261002_FAST5,
         - na końcu wypisuje INSTALL_STATUS=PASS (zapisane też w
           INSTALL_REPORT.txt w folderze programu).
 Krok 5. Naciśnij Enter, aby zamknąć okno instalatora. Program zostaje
@@ -117,7 +117,7 @@ można usunąć osobno.
                              kompletna. Można powtórzyć test.
      FAIL                  — problem strukturalny albo ZŁA WERSJA PROGRAMU
                              (patrz punkt 8).
-   Sprawdź, że WERSJA = APEX_CONTEXT_ENGINE_FIXED_20261002_FAST4,
+   Sprawdź, że WERSJA = APEX_CONTEXT_ENGINE_FIXED_20261002_FAST5,
    NIEROZWIĄZANE = 0 i NIEROZWINIĘTE = 0.
    KURSY (wszystkie kopie) liczy każdą kopię zakładu z każdej zakładki;
    KURSY W PAKIECIE to unikalne zakłady (ta sama oferta pokazana w kilku

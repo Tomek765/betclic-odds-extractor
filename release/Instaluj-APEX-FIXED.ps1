@@ -18,7 +18,7 @@ Set-StrictMode -Version 3
 $ErrorActionPreference = "Stop"
 
 $InstallName  = "APEX_Context_Engine_FIXED_2026-09-27"
-$BuildId      = "APEX_CONTEXT_ENGINE_FIXED_20261002_FAST4"
+$BuildId      = "APEX_CONTEXT_ENGINE_FIXED_20261002_FAST5"
 $BuildTag     = ($BuildId -split "_")[-1]
 $BuildFamily  = "APEX_CONTEXT_ENGINE_FIXED_"
 $ShortcutName = "APEX Context Engine - FIXED"

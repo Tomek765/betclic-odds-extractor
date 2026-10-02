@@ -48,3 +48,13 @@ that the terms copy does not document these specific contracts. Only
 rule. "Czerwona kartka (- <team>)" now has its closed Tak/Nie outcome shape
 (BINARY_EVENT, team owner) and is listed among contracts whose duration still
 needs evidence, so it stays explicitly quarantined.
+
+## 2026-10-02 — unrecognized Top cards (FAST6)
+
+A row inside the proven Top good-deal/offer card boundary (`is_top_offer_card`)
+whose sentence matches no audited grammar in `recover_headerless_top_offer` is
+an explicit semantic exclusion `UNRECOGNIZED_TOP_CARD`: family GENERIC, period
+and settlement UNKNOWN, never priced, never in the odds package.  The card is
+fully captured (sentence and price), so it does not mark the capture
+incomplete.  Headerless rows outside that boundary remain
+`MISSING_MARKET_HEADER` and keep the capture PARTIAL.

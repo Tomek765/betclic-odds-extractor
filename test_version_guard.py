@@ -57,7 +57,7 @@ class VersionGuard(unittest.TestCase):
             self.assertFalse(check_build("FAST3", 1)["outdated"])
 
     def test_current_build_constants(self):
-        self.assertTrue(BUILD_ID.endswith("_FAST5"))
+        self.assertTrue(BUILD_ID.endswith("_FAST6"))
         self.assertEqual(len(str(BUILD_SEQ)), 12)
 
 

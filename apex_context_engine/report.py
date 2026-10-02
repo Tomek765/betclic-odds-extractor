@@ -198,6 +198,7 @@ QUARANTINE_REASON_DETAILS = {
     "UNSUPPORTED_OPTIONAL_STATISTICS_PERIOD": "Statistics market whose settlement period is not stated or documented.",
     "UNCONFIRMED_MARKET_PERIOD": "Market whose settlement period is not stated or documented.",
     "UNCONFIRMED_MARKET_SETTLEMENT": "Market family or payout shape not recognised.",
+    "UNRECOGNIZED_TOP_CARD": "Top card sentence outside the audited grammar; never priced or guessed.",
     "UNSUPPORTED_PERIOD:OTHER": "Explicit non-regular period (extra time, penalties); valid bet, not priced by the model.",
     "UNSUPPORTED_PERIOD:QUALIFICATION": "Qualification market; valid bet, not priced by the model.",
     "AMBIGUOUS_COMPOUND_OUTCOME": "Selection could not be mapped to one outcome of the event.",

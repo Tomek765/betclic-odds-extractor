@@ -80,6 +80,22 @@ def _column_role_from_instance(market_instance_id: str) -> str:
     return match.group(1).replace(".", " ").strip() if match else ""
 
 
+# Title of a proven Top card whose sentence matches no audited grammar.  Such a
+# card is always excluded (UNRECOGNIZED_TOP_CARD), never priced or guessed.
+UNRECOGNIZED_TOP_CARD_TITLE = "Karta Top - nierozpoznana treść"
+
+
+def is_top_offer_card(tab_name: str, market_instance_id: str) -> bool:
+    """The exact DOM boundary of a self-describing Top good-deal/offer card."""
+    instance = str(market_instance_id or "").casefold()
+    qa_betting_card = ("div[market-box#" in instance
+                       and "bcdk-bet-button-wrapper" in instance
+                       and "button[market-selection" in instance)
+    return (_semantic_text(tab_name) == "top"
+            and ("marketbox.is-gooddeals" in instance or qa_betting_card)
+            and "sports-matrix-markets" in instance)
+
+
 def recover_headerless_top_offer(selection: str, tab_name: str,
                                  market_instance_id: str, home_team: str = "",
                                  away_team: str = "") -> dict[str, str] | None:
@@ -88,13 +104,7 @@ def recover_headerless_top_offer(selection: str, tab_name: str,
     This is deliberately not a generic missing-header fallback.  Both the exact
     DOM boundary and a complete closed row grammar are required.
     """
-    instance = str(market_instance_id or "").casefold()
-    qa_betting_card = ("div[market-box#" in instance
-                       and "bcdk-bet-button-wrapper" in instance
-                       and "button[market-selection" in instance)
-    if (_semantic_text(tab_name) != "top"
-            or not ("marketbox.is-gooddeals" in instance or qa_betting_card)
-            or "sports-matrix-markets" not in instance):
+    if not is_top_offer_card(tab_name, market_instance_id):
         return None
     source = " ".join(str(selection or "").split())
 
@@ -1933,3 +1943,24 @@ def parse_market_record(
         odd_rec.update(PAYOUT_CONTRACT="UNKNOWN", SETTLEMENT="UNKNOWN",
                        CONTRACT_MISSING="WINNING_EVENT,PAYOUT_FORMULA,REFUND,HISTORICAL_RULE_APPLICABILITY")
     return odd_rec, None
+
+
+def headerless_top_card_exclusion(selection: str, tab_name: str, market_instance_id: str) -> dict[str, str] | None:
+    """A proven Top card with an unaudited sentence: an explicit exclusion.
+
+    The capture of the card is complete (price and text are both read); only
+    its betting semantics are unknown.  It is therefore an accounted semantic
+    exclusion, not a capture gap.  Rows outside the Top card boundary stay
+    MISSING_MARKET_HEADER.
+    """
+    text = " ".join(str(selection or "").split())
+    if not text or not is_top_offer_card(tab_name, market_instance_id):
+        return None
+    return {"market_title": UNRECOGNIZED_TOP_CARD_TITLE, "raw_selection": text, "unrecognized_top_card": "1"}
+
+
+def neutralize_unrecognized_top_card(record: dict) -> dict:
+    """Never let free text of an unknown card acquire a family, period or line."""
+    record.update({"FAMILY": "GENERIC", "PERIOD": "UNKNOWN", "SETTLEMENT": "UNKNOWN", "OWNER": "",
+                   "LINE": "", "PARTICIPANT": "", "UNRECOGNIZED_TOP_CARD": True})
+    return record

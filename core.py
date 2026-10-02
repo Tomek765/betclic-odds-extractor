@@ -47,15 +47,17 @@ from parser import (
     has_selectable_time_window,
     is_fast_window_tab,
     is_correct_score_group_selection,
+    headerless_top_card_exclusion,
+    neutralize_unrecognized_top_card,
     parse_market_record,
     recover_headerless_top_offer,
     _known_not_modeled_settlement,
 )
 
-BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20261002_FAST5"
+BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20261002_FAST6"
 # Monotonic release order (UTC yyyymmddHHMM).  version_guard and the
 # installer compare it with BUILD_INFO.txt BUILD_SEQ / BUILT_AT of older builds.
-BUILD_SEQ = 202610022130
+BUILD_SEQ = 202610022300
 ACCOUNTING_SCHEMA_VERSION = "2.0"
 SEMANTIC_QUARANTINE_SCHEMA_VERSION = "2.0"
 DEFAULT_TAB_MAX_SECONDS = 60.0
@@ -762,6 +764,8 @@ def _semantic_quarantine_reason(item: dict[str, Any]) -> str:
     """Fail closed when period or settlement is not proven for a retained row."""
     title = unicodedata.normalize("NFKD", str(item.get("MARKET") or "")).encode("ascii", "ignore").decode().casefold()
     tab = unicodedata.normalize("NFKD", str(item.get("CATEGORY") or item.get("MAIN_TAB") or "")).encode("ascii", "ignore").decode().casefold()
+    if item.get("UNRECOGNIZED_TOP_CARD"):
+        return "UNRECOGNIZED_TOP_CARD"
     if "xtra wygrana" in title:
         return "UNCONFIRMED_XTRA_PAYOUT_CONTRACT"
     if (str(item.get("FAMILY") or "") in {
@@ -2495,6 +2499,9 @@ class BetclicOddsExtractor:
                             home_team, away_team,
                         )
                         if headerless_recovery is None:
+                            headerless_recovery = headerless_top_card_exclusion(
+                                item.get("selection") or "", tab_name, item.get("market_instance_id") or "")
+                        if headerless_recovery is None:
                             ledger_entry["terminal_state"] = "ACCOUNTED_EXCLUDED_WITH_REASON"
                             unresolved_items.append({
                                 "MARKET": f"NO_HEADER_{tab_name}",
@@ -2526,6 +2533,8 @@ class BetclicOddsExtractor:
                         run_id=run_id, event_id=event_id, raw_record_id=raw_record_id,
                         source_raw_record_ids=[raw_record_id],
                     )
+                    if odd_rec and (headerless_recovery or {}).get("unrecognized_top_card"):
+                        neutralize_unrecognized_top_card(odd_rec)
                     if odd_rec:
                         ledger_entry["terminal_state"] = "PARSED_CANONICAL"
                         odd_rec["capture_id"] = item.get("capture_id") or ""

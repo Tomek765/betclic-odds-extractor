@@ -26,7 +26,8 @@ from core import (
     semantic_quarantine_scope_counts,
     validate_mycombi_state_for_event,
 )
-from parser import parse_market_record, recover_headerless_top_offer
+from parser import (headerless_top_card_exclusion, neutralize_unrecognized_top_card,
+                    parse_market_record, recover_headerless_top_offer)
 
 REAL_RUN_JSONL = Path("diagnostics/raw_before_dedupe_run_1785259772_7560.jsonl")
 LEGACY_GROUPED_PERIOD_SNAPSHOT_RUNS = frozenset({"1785269255_18296"})
@@ -469,6 +470,9 @@ def replay_real_prematch(path: Path = REAL_RUN_JSONL) -> dict[str, Any]:
                 home_team, away_team,
             )
             if headerless_recovery is None:
+                headerless_recovery = headerless_top_card_exclusion(
+                    row.get("selection") or "", row.get("tab_name") or "", row.get("market_instance_id") or "")
+            if headerless_recovery is None:
                 unresolved.append({"MARKET": "NO_HEADER_" + str(row.get("tab_name", "")),
                                    "RAW": row.get("raw", ""), "REASON": "MISSING_MARKET_HEADER"})
                 continue
@@ -485,6 +489,8 @@ def replay_real_prematch(path: Path = REAL_RUN_JSONL) -> dict[str, Any]:
             handicap_kind_hint=row.get("handicap_kind") or "", market_instance_id=row.get("market_instance_id") or "",
             home_team=home_team, away_team=away_team, container_id=_capture_container_identity(row),
         )
+        if record and (headerless_recovery or {}).get("unrecognized_top_card"):
+            neutralize_unrecognized_top_card(record)
         if record:
             record.update({"capture_id": row.get("capture_id") or "", "source_index": row.get("source_index", source_index),
                            "run_id": row.get("run_id") or "", "event_id": row.get("event_id") or "",

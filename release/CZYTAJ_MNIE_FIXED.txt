@@ -1,13 +1,13 @@
-APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20261002_FAST6)
+APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20261002_FAST7)
 
 ZAWSZE NAJNOWSZA WERSJA
-Instaluj tylko paczke z najnowszym znacznikiem (np. FAST6). Stare paczki
+Instaluj tylko paczke z najnowszym znacznikiem (np. FAST7). Stare paczki
 usun - instalator je wskaze i moze przeniesc do Kosza. Wersje widac w oknie
 programu (WERSJA: ...) i w tescie na zywo (wiersz WERSJA).
 
 INSTALACJA (Windows 10/11 x64)
 1. Rozpakuj caly ZIP (np. do Pobrane). Nie uruchamiaj jako Administrator.
-2. Wejdz do folderu APEX_Context_Engine_FAST6 (nazwa zawiera wersje).
+2. Wejdz do folderu APEX_Context_Engine_FAST7 (nazwa zawiera wersje).
 3. Kliknij dwukrotnie INSTALUJ.cmd.
    - instalator pokaze wersje zainstalowana i nowa; starszej wersji na
      miejsce nowszej NIE zainstaluje
@@ -17,7 +17,7 @@ INSTALACJA (Windows 10/11 x64)
      %LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
    - na pulpicie pojawi sie skrot "APEX Context Engine - FIXED"
    - program uruchomi sie z tego skrotu, a instalator sprawdzi, ze dziala
-     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20261002_FAST6)
+     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20261002_FAST7)
    - wynik zapisuje sie w INSTALL_REPORT.txt w folderze programu
 4. Jesli Windows SmartScreen pokaze "System Windows ochronil ten komputer",
    wybierz "Wiecej informacji" -> "Uruchom mimo to" (plik nie jest podpisany).
@@ -42,6 +42,8 @@ pokazal jednej zakladki (PUSTE ZAKLADKI) - reszta danych jest kompletna.
 FAIL oznacza brak strukturalny albo ZLA WERSJA PROGRAMU.
 
 CO NAPRAWIONO
+- (FAST7) Inicjal "I." nie jest juz brany za spojnik "i": "I. Perisic" nie
+  zamienia sie w ". Perisic" (strzelec, strzelec + asystent, kombinacje).
 - (FAST6) Karta Top z NOWYM, nieznanym sformulowaniem Betclic nie obniza
   juz ekstrakcji do PARTIAL. Jest jawnie pominieta (nie trafia do pakietu,
   nic nie jest zgadywane) i liczona w POMINIETE CELOWO. Wiersze bez

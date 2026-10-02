@@ -54,10 +54,10 @@ from parser import (
     _known_not_modeled_settlement,
 )
 
-BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20261002_FAST6"
+BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20261002_FAST7"
 # Monotonic release order (UTC yyyymmddHHMM).  version_guard and the
 # installer compare it with BUILD_INFO.txt BUILD_SEQ / BUILT_AT of older builds.
-BUILD_SEQ = 202610022300
+BUILD_SEQ = 202610022330
 ACCOUNTING_SCHEMA_VERSION = "2.0"
 SEMANTIC_QUARANTINE_SCHEMA_VERSION = "2.0"
 DEFAULT_TAB_MAX_SECONDS = 60.0

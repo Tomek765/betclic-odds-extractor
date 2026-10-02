@@ -11,7 +11,7 @@
 Set-StrictMode -Version 3
 $ErrorActionPreference = "Stop"
 
-$ExpectedBuild = "APEX_CONTEXT_ENGINE_FIXED_20261002_FAST6"
+$ExpectedBuild = "APEX_CONTEXT_ENGINE_FIXED_20261002_FAST7"
 $InstallDir = Join-Path $env:LOCALAPPDATA "Programs\APEX_Context_Engine_FIXED_2026-09-27"
 $Installed = Join-Path $InstallDir "APEX_Context_Engine.exe"
 $Local = Join-Path $PSScriptRoot "APEX_Context_Engine.exe"

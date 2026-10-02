@@ -1748,7 +1748,7 @@ def parse_market_record(
         candidate = deduplicate_owner_name(canonical_raw_selection.strip())
         if candidate and _period_text(candidate) not in {"tak", "nie", "yes", "no"}:
             participants = [deduplicate_owner_name(piece.strip()) for piece in
-                            re.split(r"\s*(?:/|,|\bi\b|\boraz\b|\band\b)\s*", candidate, flags=re.IGNORECASE)
+                            re.split(r"\s*[/,]\s*|\s+(?:i|oraz|and)\s+", candidate)
                             if piece.strip()]
             participant = participants[0] if len(participants) == 1 else ""
         team_owner, owner_status = canonical_event_team_name(section_title, home_team, away_team)
@@ -1831,7 +1831,9 @@ def parse_market_record(
         elif goal_assist_combination_mode == "ALL_GOAL_OR_ASSIST":
             pieces = re.split(r"\s*&\s*", canonical_raw_selection)
         else:
-            pieces = re.split(r"\s*(?:/|,|\bi\b|\boraz\b|\band\b)\s*", canonical_raw_selection, flags=re.IGNORECASE)
+            # Conjunctions are lowercase words between spaces; an initial such
+            # as "I. Perisic" or "A. Gordon" is never a separator.
+            pieces = re.split(r"\s*[/,&]\s*|\s+(?:i|oraz|and)\s+", canonical_raw_selection)
         participants = [deduplicate_owner_name(piece.strip()) for piece in pieces if piece.strip()]
         participant = participants[0] if len(participants) == 1 else ""
         if player_goal_combination:

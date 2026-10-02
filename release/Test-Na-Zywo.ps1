@@ -92,13 +92,16 @@ $why = @{
     "UNSUPPORTED_OPTIONAL_STATISTICS_PERIOD" = "statystyki bez okreslonego czasu (np. OPTA, punkty za kartki)"
     "UNCONFIRMED_TEAM_OWNER"                 = "rynek druzyny bez nazwy druzyny"
     "UNCONFIRMED_PLAYER_PROP_SCOPE"          = "rynek zawodnika bez nazwiska"
+    "UNSUPPORTED_PERIOD:OTHER"               = "statystyki liczone z dogrywka (np. faule OPTA) - inny czas niz mecz"
+    "UNSUPPORTED_PERIOD:QUALIFICATION"       = "awans / rywalizacja - inny zaklad niz wynik meczu"
 }
 $summary = Field $r "quarantine_summary"
 if ($summary) {
     Write-Host ""
     Write-Host "CELOWO POMINIETE (to NIE sa bledy programu - zasady Betclic niepotwierdzone):"
     $summary.PSObject.Properties | ForEach-Object {
-        $code = ($_.Name -split ":")[-1]
+        # "DISPOSITION:STAGE:REASON" - the reason itself may contain ":" (UNSUPPORTED_PERIOD:OTHER).
+        $code = ($_.Name -split ":", 3)[-1]
         $text = if ($why.ContainsKey($code)) { $why[$code] } else { $code }
         Write-Host ("  {0,4} x {1}  [{2}]" -f $_.Value, $text, $code)
     }

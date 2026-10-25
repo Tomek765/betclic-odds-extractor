@@ -77,6 +77,23 @@ class ExpanderStateFromAria(_Browser):
         self.assertEqual(self.expanded("", ""), "false")
 
 
+class TabClosedCountFollowsPolicy(_Browser):
+    """Live 2026-10-25 (FC Thun - Lugano, FAST10): the tab status counted every
+    aria-expanded="false" button, including player-market expanders left at
+    their default view by policy, so three tabs read PARTIAL."""
+
+    def closed(self, title):
+        self.page.set_content(BODY.replace("Wynik i gole", title).format(
+            state="", button=SEE_MORE.format(cls="", aria=' aria-expanded="false"')))
+        return core._get_dom_expansion_metrics(self.page, "Strzelcy")["remaining_closed"]
+
+    def test_player_market_at_default_view_is_not_closed(self):
+        self.assertEqual(self.closed("Zawodnik strzeli gola lub zaliczy asystę"), 0)
+
+    def test_closed_match_market_still_counts(self):
+        self.assertEqual(self.closed("Wynik i gole"), 1)
+
+
 class LatePlayerExpandersFollowPolicy(unittest.TestCase):
     def control(self, title):
         return {"see_more": True, "expanded": "false", "semantic_path": f"{title}#7", "odds_in_box": 18,

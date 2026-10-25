@@ -21,7 +21,7 @@ from diagnostics import (
     DiagnosticsManager,
 )
 from apex_context_engine.llm_format import render_llm_odds
-from exhaustive import ExhaustiveStateCrawler
+from exhaustive import ExhaustiveStateCrawler, expand_player_markets, is_player_market_title
 from history_contract_v0_1 import (
     build_history_observation,
     canonicalize_utc_datetime,
@@ -54,10 +54,10 @@ from parser import (
     _known_not_modeled_settlement,
 )
 
-BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20261025_FAST10"
+BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20261025_FAST11"
 # Monotonic release order (UTC yyyymmddHHMM).  version_guard and the
 # installer compare it with BUILD_INFO.txt BUILD_SEQ / BUILT_AT of older builds.
-BUILD_SEQ = 202610251600
+BUILD_SEQ = 202610251800
 ACCOUNTING_SCHEMA_VERSION = "2.0"
 SEMANTIC_QUARANTINE_SCHEMA_VERSION = "2.0"
 DEFAULT_TAB_MAX_SECONDS = 60.0
@@ -264,7 +264,16 @@ def _get_dom_expansion_metrics(page: Any, tab_name: str = "") -> dict[str, int]:
                 }
             }
 
-            const rem_closed = document.querySelectorAll('button[aria-expanded="false"], .marketBox_header.is-closed').length;
+            const closedEls = Array.from(document.querySelectorAll('button[aria-expanded="false"], .marketBox_header.is-closed'));
+            const rem_closed = closedEls.length;
+            // Titles of closed "see more" expanders: Python applies the
+            // player-market default-view policy to them (Betclic marks them
+            // aria-expanded="false" since 2026-10).
+            const closed_see_more_titles = closedEls.filter(el => /seeMore/i.test(el.className || '')).map(el => {
+                const box = el.closest('sports-markets-single-market,sports-market,.marketBox');
+                const head = box && box.querySelector('.marketBox_headTitle,h2,h3');
+                return head ? (head.innerText || head.textContent || '').replace(/\\s+/g, ' ').trim() : '';
+            });
             const rem_more = Array.from(document.querySelectorAll('button, span')).filter(el => {
                 const t = el.innerText ? el.innerText.trim() : '';
                 return t === 'Pokaż więcej' || t === 'Więcej';
@@ -276,10 +285,14 @@ def _get_dom_expansion_metrics(page: Any, tab_name: str = "") -> dict[str, int]:
                 unpriced_control_count: unpriced,
                 selectable_count: interactive,
                 remaining_closed: rem_closed,
+                closed_see_more_titles: closed_see_more_titles,
                 remaining_more: rem_more
             };
         })()""".replace("__APEX_TAB_NAME__", tab_literal)
         metrics = page.evaluate(script)
+        policy_closed = sum(1 for title in metrics.pop("closed_see_more_titles", None) or []
+                            if not expand_player_markets() and is_player_market_title(str(title)))
+        metrics["remaining_closed"] = max(0, int(metrics.get("remaining_closed", 0)) - policy_closed)
         return metrics
     except Exception:
         return {

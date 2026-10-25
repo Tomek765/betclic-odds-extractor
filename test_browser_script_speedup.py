@@ -1,10 +1,11 @@
-"""Audit 2026-10-25: faster browser scripts must read exactly what FAST7 read.
+"""Browser scripts must keep reading exactly what the live-proven FAST7 read.
 
-The crawler snapshot tested every page element with a nested button search
-(quadratic in page size) and the price capture recomputed whole-market texts,
-the market index and ancestor paths for every price button.  The optimised
-scripts compute these once per element.  The fixture holds the FAST7 scripts'
-output on two Betclic-shaped pages; the current scripts must reproduce it.
+FAST8 (2026-10-25) made both scripts several times faster with identical
+output on static pages, yet the first live run (Hibernian - Celtic) failed:
+the quicker crawl loop most likely read Betclic while it was still re-rendering, which
+duplicated selections and left markets closed.  FAST9 restored the FAST7
+scripts.  The fixture holds their output on two Betclic-shaped pages; any
+future change must reproduce it and must be proven live before release.
 """
 import json
 import unittest

@@ -1,13 +1,13 @@
-APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20261025_FAST13)
+APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20261025_FAST14)
 
 ZAWSZE NAJNOWSZA WERSJA
-Instaluj tylko paczke z najnowszym znacznikiem (np. FAST13). Stare paczki
+Instaluj tylko paczke z najnowszym znacznikiem (np. FAST14). Stare paczki
 usun - instalator je wskaze i moze przeniesc do Kosza. Wersje widac w oknie
 programu (WERSJA: ...) i w tescie na zywo (wiersz WERSJA).
 
 INSTALACJA (Windows 10/11 x64)
 1. Rozpakuj caly ZIP (np. do Pobrane). Nie uruchamiaj jako Administrator.
-2. Wejdz do folderu APEX_Context_Engine_FAST13 (nazwa zawiera wersje).
+2. Wejdz do folderu APEX_Context_Engine_FAST14 (nazwa zawiera wersje).
 3. Kliknij dwukrotnie INSTALUJ.cmd.
    - instalator pokaze wersje zainstalowana i nowa; starszej wersji na
      miejsce nowszej NIE zainstaluje
@@ -17,7 +17,7 @@ INSTALACJA (Windows 10/11 x64)
      %LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
    - na pulpicie pojawi sie skrot "APEX Context Engine - FIXED"
    - program uruchomi sie z tego skrotu, a instalator sprawdzi, ze dziala
-     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20261025_FAST13)
+     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20261025_FAST14)
    - wynik zapisuje sie w INSTALL_REPORT.txt w folderze programu
 4. Jesli Windows SmartScreen pokaze "System Windows ochronil ten komputer",
    wybierz "Wiecej informacji" -> "Uruchom mimo to" (plik nie jest podpisany).
@@ -42,6 +42,11 @@ pokazal jednej zakladki (PUSTE ZAKLADKI) - reszta danych jest kompletna.
 FAIL oznacza brak strukturalny albo ZLA WERSJA PROGRAMU.
 
 CO NAPRAWIONO
+- (FAST14) Zakladka Strzelcy nie daje juz falszywego FAIL
+  (LEDGER_CONSERVATION_GAP, np. Konyaspor - Genclerbirligi: 526 odczytow na
+  354 przyciski). Ponowne przewiniecie list strzelcow doklejalo drugi odczyt
+  tych samych przyciskow; teraz jest laczony z pierwszym (jeden przycisk =
+  jeden kurs, najnowsza cena).
 - (FAST13) Nazwy klubow z numerem (np. "Hannover 96", "Schalke 04") nie sa
   juz obcinane. Wczesniej "Hannover" zamiast "Hannover 96" zostawial wynik
   meczu i podwojna szanse gosci jako surowy tekst, rzuty rozne/kartki/strzaly

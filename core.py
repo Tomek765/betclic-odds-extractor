@@ -21,7 +21,8 @@ from diagnostics import (
     DiagnosticsManager,
 )
 from apex_context_engine.llm_format import render_llm_odds
-from exhaustive import ExhaustiveStateCrawler, expand_player_markets, is_player_market_title
+from exhaustive import (ExhaustiveStateCrawler, expand_player_markets, is_player_market_title,
+                        merge_capture_into_union)
 from history_contract_v0_1 import (
     build_history_observation,
     canonicalize_utc_datetime,
@@ -54,10 +55,10 @@ from parser import (
     _known_not_modeled_settlement,
 )
 
-BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20261025_FAST13"
+BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20261025_FAST14"
 # Monotonic release order (UTC yyyymmddHHMM).  version_guard and the
 # installer compare it with BUILD_INFO.txt BUILD_SEQ / BUILT_AT of older builds.
-BUILD_SEQ = 202610252200
+BUILD_SEQ = 202610252330
 ACCOUNTING_SCHEMA_VERSION = "2.0"
 SEMANTIC_QUARANTINE_SCHEMA_VERSION = "2.0"
 DEFAULT_TAB_MAX_SECONDS = 60.0
@@ -2381,7 +2382,8 @@ class BetclicOddsExtractor:
                         retry_evidence = _retry_unfinished_strzelcy_containers(
                             page, lambda tab=tab_elem: tab.click() if tab else None, self.diag.log
                         )
-                        dom_data.extend(_extract_dom_from_page(page, tab_name))
+                        added = merge_capture_into_union(dom_data, _extract_dom_from_page(page, tab_name), tab_name)
+                        self.diag.log(f"STRZELCY_RETRY_CAPTURE_MERGED tab='{tab_name}' added={added}")
                         if retry_evidence and all(item["finished"] for item in retry_evidence):
                             manifest.finished_scroll_containers = manifest.scroll_containers
                     coverage_manifests.append(manifest.as_dict())

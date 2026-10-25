@@ -106,6 +106,32 @@ def selection_identity(item: dict[str, Any]) -> str:
     return "|".join(str(item.get(k, "")).strip().lower() for k in keys)
 
 
+def merge_capture_into_union(union: list[dict[str, Any]], records: list[dict[str, Any]],
+                              tab_name: str) -> int:
+    """Fold a later full re-capture into a tab union: one selection, one row.
+
+    A re-read of a selection already in the union replaces it (latest price,
+    as in the crawl loop); only selections not yet seen are added.  Returns
+    the number of added selections.
+    """
+    def normalized(raw_record: dict[str, Any]) -> dict[str, Any]:
+        record = dict(raw_record)
+        record.setdefault("main_tab", tab_name); record.setdefault("subtab", "")
+        record.setdefault("market_group", record.get("market", "")); record.setdefault("ancestor_title", record.get("market", ""))
+        return record
+
+    position = {selection_identity(normalized(item)): index for index, item in enumerate(union)}
+    added = 0
+    for raw_record in records:
+        record = normalized(raw_record)
+        ident = selection_identity(record)
+        if ident in position:
+            union[position[ident]] = record
+        else:
+            position[ident] = len(union); union.append(record); added += 1
+    return added
+
+
 def reconcile_active_scroll_containers(manifest: CoverageManifest, snapshot: dict[str, Any]) -> int:
     """Keep only currently active material containers and mark those at both ends."""
     active = {str(box["key"]) for box in snapshot.get("scrolls", [])}

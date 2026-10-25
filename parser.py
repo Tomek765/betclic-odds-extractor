@@ -706,9 +706,17 @@ def _is_exact_match_compound_title(market_title: str) -> bool:
 
 
 def _match_compound_contract(market_title: str, raw_selection: str,
-                             home_team: str, away_team: str) -> dict[str, str] | None:
+                             home_team: str, away_team: str,
+                             native_team_names: dict | None = None) -> dict[str, str] | None:
     """Return a lossless predicate tag only for audited, exact outcome shapes."""
     title, selected = _contract_text(market_title), _contract_text(raw_selection)
+
+    def side_of(component: str) -> str:
+        # Betclic writes these selections with short team names ("Midtjylland /
+        # Lyngby" for FC Midtjylland - Lyngby BK, live 2026-10-25); resolve a
+        # whole component exactly as half/full and double-chance components.
+        return (_classify_selection_side(component, home_team, away_team)
+                or _classify_half_full_component(component, home_team, away_team, native_team_names))
     yes_no = {"tak": "YES", "yes": "YES", "nie": "NO", "no": "NO"}
 
     both_halves = re.fullmatch(
@@ -736,7 +744,7 @@ def _match_compound_contract(market_title: str, raw_selection: str,
     if title in dc_titles and "&" in raw_selection:
         dc_raw, condition_raw = [piece.strip() for piece in raw_selection.split("&", 1)]
         dc = {"1X": "HOME_DRAW", "12": "HOME_AWAY", "X2": "AWAY_DRAW"}.get(
-            _classify_double_chance_selection(dc_raw, home_team, away_team), "",
+            _classify_double_chance_selection(dc_raw, home_team, away_team, native_team_names), "",
         )
         condition = _contract_text(condition_raw)
         if dc and dc_titles[title] == "BTTS" and condition in yes_no:
@@ -754,11 +762,8 @@ def _match_compound_contract(market_title: str, raw_selection: str,
 
     if title == "wynik i kto zdobedzie 1. bramke" and "/" in raw_selection:
         result_raw, first_raw = [piece.strip() for piece in raw_selection.split("/", 1)]
-        result_side = _classify_selection_side(result_raw, home_team, away_team)
-        first_side = _classify_selection_side(
-            re.sub(r"\s+strzeli\s+pierwszy\s*$", "", first_raw, flags=re.IGNORECASE),
-            home_team, away_team,
-        )
+        result_side = side_of(result_raw)
+        first_side = side_of(re.sub(r"\s+strzeli\s+pierwszy\s*$", "", first_raw, flags=re.IGNORECASE))
         if result_side in {"HOME", "DRAW", "AWAY"} and first_side in {"HOME", "AWAY"}:
             return {"selection": f"{result_side}_RESULT_AND_{first_side}_FIRST", "line": ""}
 
@@ -1364,9 +1369,10 @@ def _classify_half_full_component(selection: str, home_team: str, away_team: str
     aliases = []
     for side, team in teams:
         parts = _semantic_text(team).split()
-        if len(parts) > 1 and parts[0].rstrip(".") in {"fc", "ac", "cr", "cd", "sc", "cf", "as", "ca"}:
+        if len(parts) > 1 and parts[0].rstrip(".") in {"fc", "ac", "cr", "cd", "sc", "cf", "as", "ca", "fk"}:
             parts = parts[1:]
-        if len(parts) > 1 and parts[-1].rstrip(".") in {"fc", "ac", "sc", "cf"}:
+        # Scandinavian/Balkan club suffixes (Lyngby BK, Brondby IF, Malmo FF).
+        if len(parts) > 1 and parts[-1].rstrip(".") in {"fc", "ac", "sc", "cf", "bk", "if", "ff", "fk"}:
             parts = parts[:-1]
         alias = compact(" ".join(parts))
         if len(alias) >= 4 and source == alias:
@@ -1544,7 +1550,7 @@ def parse_market_record(
     )
     player_outscores_opponent = _is_player_outscores_opponent_title(market_title)
     match_compound = _match_compound_contract(
-        market_title, canonical_raw_selection, home_team, away_team,
+        market_title, canonical_raw_selection, home_team, away_team, native_team_names,
     )
     if family == "GENERIC" and assist_result_condition:
         family = "PLAYER_PROP"

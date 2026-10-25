@@ -10,7 +10,9 @@ import unicodedata
 def clean_team_name(raw: str) -> str:
     """Remove trailing junk like trailing digits, scores, stats after team name."""
     name = raw.strip()
-    name = re.sub(r"\s+\d+$", "", name).strip()
+    # A lone trailing digit is score/stat noise; a multi-digit suffix is part
+    # of the club name ("Hannover 96", "Schalke 04", "Mainz 05").
+    name = re.sub(r"\s+\d$", "", name).strip()
     return name
 
 
@@ -1026,8 +1028,8 @@ def classify_family(market_title: str, selection: str, section_title: str,
     # ── GOALS OVER/UNDER ─────────────────────────────────────────────────────
     if _player_score_and_total_line(market_title):
         return "PLAYER_PROP", ""
-    if any(x in tl for x in ["suma goli", "suma bramek", "powyżej/poniżej", "powyżej", "poniżej",
-                               "over/under", "over", "under", "o/u"]):
+    if (any(x in tl for x in ["suma goli", "suma bramek", "powyżej/poniżej", "o/u"])
+            or _ou_direction(tl)):
         return "GOALS_OU", ""
 
     # ── PLAYER PROP (line-based) ─────────────────────────────────────────────
@@ -1326,9 +1328,22 @@ def extract_line_value(market_title: str, selection: str, section_title: str) ->
     return ""
 
 
+_OVER_WORD = re.compile(r"\b(?:powyżej|over)\b", re.IGNORECASE)
+_UNDER_WORD = re.compile(r"\b(?:poniżej|under)\b", re.IGNORECASE)
+
+
+def _ou_direction(text: str) -> str:
+    """OVER/UNDER only from whole words: "Hannover" or "Sunderland" are names."""
+    if _OVER_WORD.search(str(text or "")):
+        return "OVER"
+    if _UNDER_WORD.search(str(text or "")):
+        return "UNDER"
+    return ""
+
+
 def extract_player_line(text: str) -> str:
     """Extract numeric threshold from player prop text like 'Powyżej 2.5'."""
-    m = re.search(r"(?:Powyżej|Poniżej|Over|Under)\s+([0-9]+[\.,]?[0-9]*)\b",
+    m = re.search(r"\b(?:Powyżej|Poniżej|Over|Under)\s+([0-9]+[\.,]?[0-9]*)\b",
                   text, re.IGNORECASE)
     if m:
         return m.group(1).replace(",", ".")
@@ -1665,10 +1680,8 @@ def parse_market_record(
     elif family in ("GOALS_OU", "TEAM_TOTALS_HOME", "TEAM_TOTALS_AWAY", "EVENT_TOTAL"):
         line = extract_line_value(market_title, raw_selection, section_title)
         # side: Powyżej → OVER, Poniżej → UNDER
-        if "powyżej" in raw_selection.lower() or "over" in raw_selection.lower():
-            selection = "OVER"
-        elif "poniżej" in raw_selection.lower() or "under" in raw_selection.lower():
-            selection = "UNDER"
+        if _ou_direction(raw_selection):
+            selection = _ou_direction(raw_selection)
 
     elif family in {"PLAYER_PROP", "PLAYER_PROP_XTRA"}:
         # Slider rows provide an explicit participant bounded by their own
@@ -1711,7 +1724,7 @@ def parse_market_record(
                 and not goal_assist_single_kind and not pure_assist_xtra
                 and not player_score_total_line and not player_outscores_opponent):
             # Try to find name before "Powyżej"/"Poniżej"
-            m = re.match(r"^(.*?)\s*(?:Powyżej|Poniżej|Over|Under)", raw_selection, re.IGNORECASE)
+            m = re.match(r"^(.*?)\s*\b(?:Powyżej|Poniżej|Over|Under)\b", raw_selection, re.IGNORECASE)
             if m:
                 player_name = m.group(1).strip()
         participant = deduplicate_owner_name(player_name)
@@ -1729,10 +1742,8 @@ def parse_market_record(
         if not line and player_score_total_line:
             line = player_score_total_line
         goal_assist_result = _goal_assist_result_condition(market_title, period_hint)
-        if "powyżej" in raw_selection.lower() or "over" in raw_selection.lower():
-            selection = "OVER"
-        elif "poniżej" in raw_selection.lower() or "under" in raw_selection.lower():
-            selection = "UNDER"
+        if _ou_direction(raw_selection):
+            selection = _ou_direction(raw_selection)
         elif assist_threshold and line:
             selection = "OVER"
         elif assist_result_condition:

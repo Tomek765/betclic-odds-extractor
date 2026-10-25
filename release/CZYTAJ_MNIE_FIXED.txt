@@ -1,13 +1,13 @@
-APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20261025_FAST12)
+APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20261025_FAST13)
 
 ZAWSZE NAJNOWSZA WERSJA
-Instaluj tylko paczke z najnowszym znacznikiem (np. FAST12). Stare paczki
+Instaluj tylko paczke z najnowszym znacznikiem (np. FAST13). Stare paczki
 usun - instalator je wskaze i moze przeniesc do Kosza. Wersje widac w oknie
 programu (WERSJA: ...) i w tescie na zywo (wiersz WERSJA).
 
 INSTALACJA (Windows 10/11 x64)
 1. Rozpakuj caly ZIP (np. do Pobrane). Nie uruchamiaj jako Administrator.
-2. Wejdz do folderu APEX_Context_Engine_FAST12 (nazwa zawiera wersje).
+2. Wejdz do folderu APEX_Context_Engine_FAST13 (nazwa zawiera wersje).
 3. Kliknij dwukrotnie INSTALUJ.cmd.
    - instalator pokaze wersje zainstalowana i nowa; starszej wersji na
      miejsce nowszej NIE zainstaluje
@@ -17,7 +17,7 @@ INSTALACJA (Windows 10/11 x64)
      %LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
    - na pulpicie pojawi sie skrot "APEX Context Engine - FIXED"
    - program uruchomi sie z tego skrotu, a instalator sprawdzi, ze dziala
-     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20261025_FAST12)
+     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20261025_FAST13)
    - wynik zapisuje sie w INSTALL_REPORT.txt w folderze programu
 4. Jesli Windows SmartScreen pokaze "System Windows ochronil ten komputer",
    wybierz "Wiecej informacji" -> "Uruchom mimo to" (plik nie jest podpisany).
@@ -42,6 +42,11 @@ pokazal jednej zakladki (PUSTE ZAKLADKI) - reszta danych jest kompletna.
 FAIL oznacza brak strukturalny albo ZLA WERSJA PROGRAMU.
 
 CO NAPRAWIONO
+- (FAST13) Nazwy klubow z numerem (np. "Hannover 96", "Schalke 04") nie sa
+  juz obcinane. Wczesniej "Hannover" zamiast "Hannover 96" zostawial wynik
+  meczu i podwojna szanse gosci jako surowy tekst, rzuty rozne/kartki/strzaly
+  gosci oznaczal jako gole (GOALS_OU), a "Hann-over 96" czytal jako linie 96.
+  Over/Under rozpoznawane tylko jako cale slowo.
 - (FAST12) Oferty "Podwojna szansa & ..." i "Wynik i kto zdobedzie 1. bramke"
   z krotkimi nazwami druzyn (np. "Midtjylland / Lyngby & Tak" dla FC
   Midtjylland - Lyngby BK) sa ujednolicane jak pozostale (DC_HOME_AWAY_AND_

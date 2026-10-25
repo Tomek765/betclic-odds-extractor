@@ -4,8 +4,10 @@ FAST8 (2026-10-25) made both scripts several times faster with identical
 output on static pages, yet the first live run (Hibernian - Celtic) failed:
 the quicker crawl loop most likely read Betclic while it was still re-rendering, which
 duplicated selections and left markets closed.  FAST9 restored the FAST7
-scripts.  The fixture holds their output on two Betclic-shaped pages; any
-future change must reproduce it and must be proven live before release.
+scripts; FAST10 only taught them Betclic's 2026-10 expansion markup
+(test_live_hibernian_celtic.py).  The fixture holds the scripts' output on two
+Betclic-shaped pages; any future change must reproduce it and must be proven
+live before release.
 """
 import json
 import unittest

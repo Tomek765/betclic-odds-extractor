@@ -134,7 +134,7 @@ class ExhaustiveStateCrawler:
           const path=e=>{const a=[];for(let n=e;n&&n!==document.body;n=n.parentElement){if(n.matches('.marketBox,sports-market,[role=tabpanel],.accordion'))a.push(text(n).slice(0,80));}return a.join('>');};
           const isOdd=e=>e.matches('button')&&(/\\bodd\\b/i.test(e.className||'')||/^\\s*\\d{1,3}[,.]\\d{2}\\s*$/.test(text(e)));
           const controls=[],seeCount={};document.querySelectorAll('button,[role=tab],[aria-expanded],[aria-controls],[data-testid]').forEach((e,i)=>{const t=text(e),x=e.getAttribute('aria-expanded');
-          if(!isOdd(e)&&!e.disabled&&/seeMore/i.test(e.className||'')&&!e.closest('sports-betting-slip')){const box=e.closest('sports-markets-single-market,sports-market,.marketBox'),head=box&&box.querySelector('.marketBox_headTitle,h2,h3'),title=head?text(head):'',icon=e.querySelector('[class*=icon_arrow]'),k=title.toLowerCase();seeCount[k]=(seeCount[k]||0)+1;controls.push({index:i,role:'',text:'expander',aria_controls:'',expanded:/arrowUp/i.test(icon?String(icon.className||''):'')?'true':'false',semantic_path:title+'#'+seeCount[k],local_index:0,see_more:true,odds_in_box:box?Array.from(box.querySelectorAll('button')).filter(isOdd).length:0});return;}
+          if(!isOdd(e)&&!e.disabled&&/seeMore/i.test(e.className||'')&&!e.closest('sports-betting-slip')){const box=e.closest('sports-markets-single-market,sports-market,.marketBox'),head=box&&box.querySelector('.marketBox_headTitle,h2,h3'),title=head?text(head):'',icon=e.querySelector('[class*=icon_arrow]'),k=title.toLowerCase();seeCount[k]=(seeCount[k]||0)+1;controls.push({index:i,role:'',text:'expander',aria_controls:'',expanded:(x==='true'||x==='false')?x:(/(^|\\s)is-expanded(\\s|$)/.test(String(e.className||''))||/arrowUp/i.test(icon?String(icon.className||''):''))?'true':'false',semantic_path:title+'#'+seeCount[k],local_index:0,see_more:true,odds_in_box:box?Array.from(box.querySelectorAll('button')).filter(isOdd).length:0});return;}
           if(!t||isOdd(e)||e.disabled)return;if(e.getAttribute('role')==='tab'||x==='false'||/show|more|poka.{0,3}|rozwi.{0,3}|wi.{0,3}/i.test(t))controls.push({index:i,role:e.getAttribute('role')||'',text:t,aria_controls:e.getAttribute('aria-controls')||'',expanded:x,semantic_path:path(e),local_index:Array.prototype.indexOf.call(e.parentElement.children,e)});});
           const scrolls=[];document.querySelectorAll('*').forEach((e,i)=>{const s=getComputedStyle(e),panel=e.closest('[role=tabpanel]');const active=e.isConnected&&e.getClientRects().length>0&&s.display!=='none'&&s.visibility!=='hidden'&&e.getAttribute('aria-hidden')!=='true'&&!(panel&&(panel.hidden||panel.getAttribute('aria-hidden')==='true'));const material=active&&Array.from(e.querySelectorAll('button,[role=button]')).some(isOdd);if(material&&((e.scrollHeight>e.clientHeight+2&&/(auto|scroll)/.test(s.overflowY))||(e.scrollWidth>e.clientWidth+2&&/(auto|scroll)/.test(s.overflowX))))scrolls.push({index:i,key:(e.id||e.className||e.tagName)+'|'+i,top:e.scrollTop,height:e.scrollHeight,client:e.clientHeight,left:e.scrollLeft,width:e.scrollWidth,clientWidth:e.clientWidth});});return {controls,scrolls}; }"""
 
@@ -173,6 +173,11 @@ class ExhaustiveStateCrawler:
         key = stable_interaction_key(control, tab_name)
         if key in manifest.see_more_skipped:
             return True
+        # Player markets stay at their default view by policy, including those
+        # Betclic renders only after the last crawl pass (live 2026-10-25).
+        if not expand_player_markets() and is_player_market_title(str(control.get("semantic_path", "")).rsplit("#", 1)[0]):
+            manifest.see_more_skipped.add(key)
+            return True
         return (key in manifest.visited_interactions
                 and int(control.get("odds_in_box") or 0) > manifest.see_more_baseline.get(key, 1 << 30))
 
@@ -193,13 +198,15 @@ class ExhaustiveStateCrawler:
                 record.setdefault("interaction_state_key", tab_name); record.setdefault("scroll_container_key", "page"); record.setdefault("scroll_position", "")
                 sig = raw_signature(record)
                 if sig:
-                    previous = union.get(sig)
-                    # The same native selection re-read at a new price keeps
-                    # the latest price (other signatures already carry the price).
+                    # One price button is one selection: re-read at a new price
+                    # (Betclic moves prices during a scan, live 2026-10-25) it
+                    # keeps the latest price, as the downstream TICK_MOVE rule.
+                    ident = selection_identity(record)
+                    previous = union.get(ident)
                     if previous is None or str(previous.get("odds", "")) != str(record.get("odds", "")):
-                        union[sig] = record
-                    manifest.unique_visible_signatures.add(sig)
-                    identities.add(selection_identity(record))
+                        union[ident] = record
+                    manifest.unique_visible_signatures.add(ident)
+                    identities.add(ident)
             snap, actionable = self._snapshot(), []
             for control in snap.get("controls", []):
                 key = stable_interaction_key(control, tab_name); manifest.discovered_interactions.add(key)

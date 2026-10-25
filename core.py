@@ -54,10 +54,10 @@ from parser import (
     _known_not_modeled_settlement,
 )
 
-BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20261025_FAST9"
+BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20261025_FAST10"
 # Monotonic release order (UTC yyyymmddHHMM).  version_guard and the
 # installer compare it with BUILD_INFO.txt BUILD_SEQ / BUILT_AT of older builds.
-BUILD_SEQ = 202610251400
+BUILD_SEQ = 202610251600
 ACCOUNTING_SCHEMA_VERSION = "2.0"
 SEMANTIC_QUARANTINE_SCHEMA_VERSION = "2.0"
 DEFAULT_TAB_MAX_SECONDS = 60.0
@@ -1441,7 +1441,10 @@ def _make_dom_script() -> str:
         + CLEAN_FN
         + "  const results = [];" + NL
         + "  const siblingIndex = e => { if(!e||!e.parentElement)return 0; return Array.prototype.indexOf.call(e.parentElement.children,e); };" + NL
-        + "  const nodePath = e => { const out=[]; for(let n=e;n&&n!==document.body;n=n.parentElement){ const tag=n.tagName?n.tagName.toLowerCase():''; const key=n.getAttribute('data-qa')||n.getAttribute('data-testid')||n.id||n.className||''; out.push(tag+'['+String(key).replace(/\\s+/g,'.').slice(0,60)+'#'+siblingIndex(n)+']'); } return out.reverse().join('>'); };" + NL
+        # A market's expansion state ("is-expanded", live 2026-10-25) is not
+        # part of its identity: the same price button before and after opening
+        # the market is one selection.
+        + "  const nodePath = e => { const out=[]; for(let n=e;n&&n!==document.body;n=n.parentElement){ const tag=n.tagName?n.tagName.toLowerCase():''; const key=n.getAttribute('data-qa')||n.getAttribute('data-testid')||n.id||n.className||''; out.push(tag+'['+String(key).replace(/(^|\\s)is-(?:expanded|collapsed)(?=\\s|$)/g,' ').trim().replace(/\\s+/g,'.').slice(0,60)+'#'+siblingIndex(n)+']'); } return out.reverse().join('>'); };" + NL
         + "  const isMyCombi = (currentTabName || '').trim().toLowerCase().includes('mycombi');" + NL
         # Section (category) context is bound structurally, never by the first
         # header found anywhere below a shared ancestor.  Betclic renders

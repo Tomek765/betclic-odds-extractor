@@ -36,3 +36,27 @@ class InitialIsNotAConjunction(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class NonGoalPlayerPropsCarryNoScorerScope(unittest.TestCase):
+    """Audit 2026-10-25: 57 shots/cards/fouls/offsides/assist rows per match
+    carried SCORER_SCOPE=ANYTIME, a goal-scorer scope that does not apply."""
+
+    def scope(self, title, selection="Harry Kane Powyżej 0,5"):
+        row, issue = parse_market_record(
+            category="Statystyki", market_title=title, raw_selection=selection, odds_str="1.50",
+            raw_text=f"{selection} 1.50", section_title="Anglia", home_team="Chorwacja", away_team="Anglia",
+            container_id="c", participant_hint="Harry Kane")
+        assert issue is None, issue
+        return row["FAMILY"], row.get("SCORER_SCOPE", "")
+
+    def test_non_goal_props_have_no_scope(self):
+        for title in ("Liczba strzałów zawodnika (OPTA)", "Liczba celnych strzałów zawodnika (OPTA)",
+                      "Liczba kartek zawodnika", "Liczba fauli zawodnika (OPTA) - 1. połowa",
+                      "Liczba spalonych zawodnika (OPTA) - 1. połowa", "Zawodnik zanotuje asystę"):
+            self.assertEqual(self.scope(title), ("PLAYER_PROP", ""), title)
+
+    def test_goal_props_keep_their_scope(self):
+        self.assertEqual(self.scope("Zawodnik strzeli i powyżej 1,5 goli - 1. połowa", "Harry Kane"),
+                         ("PLAYER_PROP", "ANYTIME"))
+        self.assertEqual(self.scope("Strzelec", "Harry Kane"), ("GOALSCORER", "ANYTIME"))

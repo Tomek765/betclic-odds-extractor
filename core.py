@@ -54,10 +54,10 @@ from parser import (
     _known_not_modeled_settlement,
 )
 
-BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20261002_FAST7"
+BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20261025_FAST8"
 # Monotonic release order (UTC yyyymmddHHMM).  version_guard and the
 # installer compare it with BUILD_INFO.txt BUILD_SEQ / BUILT_AT of older builds.
-BUILD_SEQ = 202610022330
+BUILD_SEQ = 202610251200
 ACCOUNTING_SCHEMA_VERSION = "2.0"
 SEMANTIC_QUARANTINE_SCHEMA_VERSION = "2.0"
 DEFAULT_TAB_MAX_SECONDS = 60.0
@@ -1441,7 +1441,11 @@ def _make_dom_script() -> str:
         + CLEAN_FN
         + "  const results = [];" + NL
         + "  const siblingIndex = e => { if(!e||!e.parentElement)return 0; return Array.prototype.indexOf.call(e.parentElement.children,e); };" + NL
-        + "  const nodePath = e => { const out=[]; for(let n=e;n&&n!==document.body;n=n.parentElement){ const tag=n.tagName?n.tagName.toLowerCase():''; const key=n.getAttribute('data-qa')||n.getAttribute('data-testid')||n.id||n.className||''; out.push(tag+'['+String(key).replace(/\\s+/g,'.').slice(0,60)+'#'+siblingIndex(n)+']'); } return out.reverse().join('>'); };" + NL
+        # Memoised per element: every price button repeats its ancestors' path.
+        + "  const nodePathCache = new Map();" + NL
+        + "  const nodePath = e => { if(!e||e===document.body) return ''; if(nodePathCache.has(e)) return nodePathCache.get(e); const tag=e.tagName?e.tagName.toLowerCase():''; const key=e.getAttribute('data-qa')||e.getAttribute('data-testid')||e.id||e.className||''; const seg=tag+'['+String(key).replace(/\\s+/g,'.').slice(0,60)+'#'+siblingIndex(e)+']'; const up=nodePath(e.parentElement); const v=up?up+'>'+seg:seg; nodePathCache.set(e,v); return v; };" + NL
+        + "  const scrollParentCache = new Map();" + NL
+        + "  const scrollParentOf = start => { const seen=[]; let n=start; while(n&&n!==document.body){ if(scrollParentCache.has(n)){ n=scrollParentCache.get(n); break; } seen.push(n); const s=getComputedStyle(n); if(/(auto|scroll)/.test(s.overflowY+s.overflowX)) break; n=n.parentElement; } seen.forEach(v=>scrollParentCache.set(v,n)); return n; };" + NL
         + "  const isMyCombi = (currentTabName || '').trim().toLowerCase().includes('mycombi');" + NL
         # Section (category) context is bound structurally, never by the first
         # header found anywhere below a shared ancestor.  Betclic renders
@@ -1456,6 +1460,8 @@ def _make_dom_script() -> str:
         + "  const MARKET_LIST_ROOT_SEL = '.verticalScroller_list, sports-match-markets, [role=\"tabpanel\"]';" + NL
         + "  const sectionKeyOf = e => { const s = e && e.closest ? e.closest('[data-section]') : null; return s ? String(s.getAttribute('data-section') || '') : ''; };" + NL
         + "  const sectionCache = new Map();" + NL
+        + "  const headerTextCache = new Map(); const headerText = h => { if (!headerTextCache.has(h)) headerTextCache.set(h, cleanText(h.innerText || h.textContent)); return headerTextCache.get(h); };" + NL
+        + "  const scopeHeaderCache = new Map(); const scopeHeaders = scope => { if (!scopeHeaderCache.has(scope)) scopeHeaderCache.set(scope, Array.from(scope.querySelectorAll(SECTION_HEADER_SEL))); return scopeHeaderCache.get(scope); };" + NL
         + "  const resolveSection = (anchor, marketTitle) => {" + NL
         + "    const cacheKey = marketTitle;" + NL
         + "    let perAnchor = sectionCache.get(anchor);" + NL
@@ -1464,11 +1470,11 @@ def _make_dom_script() -> str:
         + "    let result = { title: '', source: 'NONE', key: ownKey };" + NL
         + "    let branch = anchor;" + NL
         + "    for (let scope = anchor.parentElement; scope && scope !== document.body; branch = scope, scope = scope.parentElement) {" + NL
-        + "      const headers = Array.from(scope.querySelectorAll(SECTION_HEADER_SEL)).filter(h => {" + NL
+        + "      const headers = scopeHeaders(scope).filter(h => {" + NL
         + "        if (branch.contains(h) || h.contains(anchor)) return false;" + NL
         + "        const hostMarket = h.closest(MARKET_BOUNDARY_SEL);" + NL
         + "        if (hostMarket && !hostMarket.contains(anchor)) return false;" + NL
-        + "        const t = cleanText(h.innerText || h.textContent);" + NL
+        + "        const t = headerText(h);" + NL
         + "        return Boolean(t) && t.length < 80;" + NL
         + "      });" + NL
         + "      if (headers.length) {" + NL
@@ -1482,7 +1488,7 @@ def _make_dom_script() -> str:
         + "          chosen = preceding[preceding.length - 1] || null;" + NL
         + "          source = 'PRECEDING_SECTION_HEADER';" + NL
         + "        }" + NL
-        + "        const chosenTitle = chosen ? cleanText(chosen.innerText || chosen.textContent) : '';" + NL
+        + "        const chosenTitle = chosen ? headerText(chosen) : '';" + NL
         + "        if (!chosen) result = { title: '', source: 'NONE_UNBOUND_SECTION_HEADERS', key: ownKey };" + NL
         + "        else if (chosenTitle === marketTitle) result = { title: '', source: 'SECTION_HEADER_EQUALS_MARKET_TITLE', key: ownKey };" + NL
         + "        else result = { title: chosenTitle, source: source, key: ownKey };" + NL
@@ -1494,6 +1500,12 @@ def _make_dom_script() -> str:
         + "    perAnchor.set(cacheKey, result);" + NL
         + "    return result;" + NL
         + "  };" + NL
+        # Values that are constant for one evaluation are computed once, not
+        # per price button (the DOM does not change while this script runs).
+        + "  const boxIndex = new Map(); Array.from(document.querySelectorAll('div.marketBox, sports-market')).forEach((b, i) => boxIndex.set(b, i));" + NL
+        + "  const boxContextCache = new Map(); const boxContext = b => { if (!boxContextCache.has(b)) boxContextCache.set(b, cleanText(b.innerText || b.textContent).slice(0, 200)); return boxContextCache.get(b); };" + NL
+        + "  const columnHeaderCache = new Map(); const columnHeadersOf = body => { if (!columnHeaderCache.has(body)) columnHeaderCache.set(body, Array.from(body.querySelectorAll('.marketBox_itemValue')).map(el => cleanText(el.innerText || el.textContent)).filter(Boolean)); return columnHeaderCache.get(body).slice(); };" + NL
+        + "  const activeSubtab = cleanText((document.querySelector('[role=tab][aria-selected=true], .tab_item.isActive, .tab.isActive')||{}).innerText || '');" + NL
         + "  const rawElements = Array.from(document.querySelectorAll('button.is-odd, button[class*=\"odd\"], [class*=\"oddValue\"]'));" + NL
         + "  const seenButtons = new Set();" + NL
         + "  let sourceIndex = 0;" + NL
@@ -1533,8 +1545,7 @@ def _make_dom_script() -> str:
         + "          marketTitle = rawHeader;" + NL
         + "        }" + NL
         + "      }" + NL
-        + "      const allBoxes = Array.from(document.querySelectorAll('div.marketBox, sports-market'));" + NL
-        + "      const boxIdx = allBoxes.indexOf(marketBox);" + NL
+        + "      const boxIdx = boxIndex.has(marketBox) ? boxIndex.get(marketBox) : -1;" + NL
         + "      if (boxIdx >= 0) {" + NL
         + "        containerId = 'box_' + boxIdx + '_' + currentTabName.replace(" + RE_SP + ", '_');" + NL
         + "      }" + NL
@@ -1574,7 +1585,7 @@ def _make_dom_script() -> str:
         + "    const groupedBody = lineEl && marketBox && marketBox.classList.contains('is-groupedMarket') ? lineEl.closest('.marketBox_body') : null;" + NL
         + "    const oddsItem = btn.closest('.marketBox_item'); const oddsList = oddsItem ? oddsItem.parentElement : null;" + NL
         + "    const columnIndex = oddsItem && oddsList && oddsList.classList.contains('marketBox_list') ? siblingIndex(oddsItem) : -1;" + NL
-        + "    const columnHeaders = groupedBody ? Array.from(groupedBody.querySelectorAll('.marketBox_itemValue')).map(el => cleanText(el.innerText || el.textContent)).filter(Boolean) : [];" + NL
+        + "    const columnHeaders = groupedBody ? columnHeadersOf(groupedBody) : [];" + NL
         + "    const columnHeading = columnIndex >= 0 && columnIndex < columnHeaders.length ? columnHeaders[columnIndex] : '';" + NL
         + "    const periodHint = attrPeriodHint || columnHeading;" + NL
         + "    const evidenceEl = lineEl || marketBox || btn;" + NL
@@ -1585,9 +1596,9 @@ def _make_dom_script() -> str:
         + "    const handicapKind = /2-drożny|2-drozny/i.test(marketTitle) ? 'TWO_WAY' : (/handicap/i.test(marketTitle) ? 'THREE_WAY' : '');" + NL
         + "    const style = getComputedStyle(btn); const visibility = (style.display==='none'||style.visibility==='hidden'||style.opacity==='0') ? 'HIDDEN' : 'VISIBLE';" + NL
         + "    const renderState = evidenceEl.getAttribute('data-state') || evidenceEl.getAttribute('aria-hidden') || visibility;" + NL
-        + "    let scrollParent=evidenceEl.parentElement; while(scrollParent&&scrollParent!==document.body){ const s=getComputedStyle(scrollParent); if(/(auto|scroll)/.test(s.overflowY+s.overflowX)) break; scrollParent=scrollParent.parentElement; }" + NL
+        + "    const scrollParent=scrollParentOf(evidenceEl.parentElement);" + NL
         + "    const scrollPosition = scrollParent ? (scrollParent.scrollLeft+','+scrollParent.scrollTop) : '0,0';" + NL
-        + "    const activeSubtab = cleanText((document.querySelector('[role=tab][aria-selected=true], .tab_item.isActive, .tab.isActive')||{}).innerText || '');" + NL
+
         + "    const containerPath = nodePath(marketBox || evidenceEl.parentElement); const rowEl = lineEl || evidenceEl.parentElement; const rowIndex = siblingIndex(rowEl); const cellPath = nodePath(btn);" + NL
         + "    const periodScopeId='scope:'+currentTabName.replace(/\\s+/g,'.')+'|'+containerPath+(columnHeading ? '|column:'+columnHeading.replace(/\\s+/g,'.') : ''); const periodEvidenceCandidates=[]; const addEvidence=(type,value)=>{const v=cleanText(value);if(/(?:1\\.\\s*połowa|2\\.\\s*połowa|cały\\s*mecz|90\\s*min)/i.test(v))periodEvidenceCandidates.push({source_type:type,raw_value:v,normalized_hint:v,dom_fingerprint:periodScopeId,evidence_period:'',evidence_provenance:type});}; addEvidence('ATTRIBUTE',attrPeriodHint);addEvidence('HEADER',columnHeading);addEvidence('CONTAINER',marketTitle);" + NL
         + "    const domPath = cellPath; const marketInstanceId = 'tab:'+currentTabName.replace(/\\s+/g,'.')+'|'+containerPath+(columnHeading ? '|column:'+columnHeading.replace(/\\s+/g,'.') : '')+'|row#'+rowIndex+'|cell:'+cellPath;" + NL
@@ -1628,7 +1639,7 @@ def _make_dom_script() -> str:
         + "      market_instance_id: marketInstanceId," + NL
         + "      dom_path: domPath," + NL
         + "      heading_path: headingPath," + NL
-        + "      box_context: marketBox ? cleanText(marketBox.innerText || marketBox.textContent).slice(0, 200) : ''," + NL
+        + "      box_context: marketBox ? boxContext(marketBox) : ''," + NL
         + "      visibility: visibility," + NL
         + "      render_state: renderState," + NL
         + "      scroll_position: scrollPosition," + NL

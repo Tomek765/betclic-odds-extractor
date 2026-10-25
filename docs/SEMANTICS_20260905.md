@@ -58,3 +58,10 @@ and settlement UNKNOWN, never priced, never in the odds package.  The card is
 fully captured (sentence and price), so it does not mark the capture
 incomplete.  Headerless rows outside that boundary remain
 `MISSING_MARKET_HEADER` and keep the capture PARTIAL.
+
+## 2026-10-25 — scorer scope only on goal propositions (FAST8)
+
+`SCORER_SCOPE` describes which goal settles a scorer proposition.  Player
+propositions whose market title names no goal (shots, shots on target, cards,
+fouls, offsides, tackles, assists) carry no scorer scope; goal propositions
+("Zawodnik strzeli ...", "Strzelec ...") keep theirs.

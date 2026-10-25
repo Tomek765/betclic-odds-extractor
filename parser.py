@@ -1616,6 +1616,10 @@ def parse_market_record(
         scorer_scope_value, column_semantics_status = "", "NOT_APPLICABLE"
     elif player_penalty_conversion:
         scorer_scope_value, column_semantics_status = "ANYTIME", "PROVEN"
+    elif family == "PLAYER_PROP" and not re.search(r"gol|bramk|strzel", _semantic_text(market_title)):
+        # Shots, cards, fouls, offsides, tackles and assists are not goal
+        # propositions: a goal-scorer scope ("ANYTIME") would be noise.
+        scorer_scope_value, column_semantics_status = "", "NOT_APPLICABLE"
     elif family in {"GOALSCORER", "PLAYER_PROP", "PLAYER_COMBINATION"}:
         scorer_scope_value, column_semantics_status = scorer_scope_from_evidence(
             f"{market_title} {section_title} {ancestor_title}", column_role

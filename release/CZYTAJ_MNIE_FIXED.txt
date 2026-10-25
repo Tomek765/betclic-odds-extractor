@@ -1,13 +1,13 @@
-APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20261002_FAST7)
+APEX CONTEXT ENGINE - FIXED (build APEX_CONTEXT_ENGINE_FIXED_20261025_FAST8)
 
 ZAWSZE NAJNOWSZA WERSJA
-Instaluj tylko paczke z najnowszym znacznikiem (np. FAST7). Stare paczki
+Instaluj tylko paczke z najnowszym znacznikiem (np. FAST8). Stare paczki
 usun - instalator je wskaze i moze przeniesc do Kosza. Wersje widac w oknie
 programu (WERSJA: ...) i w tescie na zywo (wiersz WERSJA).
 
 INSTALACJA (Windows 10/11 x64)
 1. Rozpakuj caly ZIP (np. do Pobrane). Nie uruchamiaj jako Administrator.
-2. Wejdz do folderu APEX_Context_Engine_FAST7 (nazwa zawiera wersje).
+2. Wejdz do folderu APEX_Context_Engine_FAST8 (nazwa zawiera wersje).
 3. Kliknij dwukrotnie INSTALUJ.cmd.
    - instalator pokaze wersje zainstalowana i nowa; starszej wersji na
      miejsce nowszej NIE zainstaluje
@@ -17,7 +17,7 @@ INSTALACJA (Windows 10/11 x64)
      %LOCALAPPDATA%\Programs\APEX_Context_Engine_FIXED_2026-09-27
    - na pulpicie pojawi sie skrot "APEX Context Engine - FIXED"
    - program uruchomi sie z tego skrotu, a instalator sprawdzi, ze dziala
-     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20261002_FAST7)
+     nowy build (tytul okna zawiera APEX_CONTEXT_ENGINE_FIXED_20261025_FAST8)
    - wynik zapisuje sie w INSTALL_REPORT.txt w folderze programu
 4. Jesli Windows SmartScreen pokaze "System Windows ochronil ten komputer",
    wybierz "Wiecej informacji" -> "Uruchom mimo to" (plik nie jest podpisany).
@@ -42,6 +42,11 @@ pokazal jednej zakladki (PUSTE ZAKLADKI) - reszta danych jest kompletna.
 FAIL oznacza brak strukturalny albo ZLA WERSJA PROGRAMU.
 
 CO NAPRAWIONO
+- (FAST8, audyt 17 meczow) Szybszy odczyt strony: skrypty przegladarki
+  licza kosztowne rzeczy raz zamiast przy kazdym kursie (do 7x szybciej na
+  duzych stronach, wynik identyczny bit w bit). Oferty zawodnikow na
+  strzaly, kartki, faule, spalone i asysty nie maja juz zbednego
+  SCORER_SCOPE=ANYTIME.
 - (FAST7) Inicjal "I." nie jest juz brany za spojnik "i": "I. Perisic" nie
   zamienia sie w ". Perisic" (strzelec, strzelec + asystent, kombinacje).
 - (FAST6) Karta Top z NOWYM, nieznanym sformulowaniem Betclic nie obniza

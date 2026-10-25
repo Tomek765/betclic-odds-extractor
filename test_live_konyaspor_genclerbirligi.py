@@ -48,5 +48,23 @@ class StrzelcyRetryMergeTest(unittest.TestCase):
         self.assertIn("merge_capture_into_union(dom_data, _extract_dom_from_page(page, tab_name), tab_name)", source)
 
 
+class FailedTabIsNamedInOddsPackageTest(unittest.TestCase):
+    """Club Brugge - Sint-Truidense VV (GUI run): DATA_STATUS=FAIL said nothing more."""
+    def test_failed_tab_reason_is_in_the_package_header(self):
+        reports = [{"tab_name": "Top", "status": "PASS", "reason": "OK"},
+                   {"tab_name": "Strzelcy", "status": "FAIL", "reason": "LEDGER_CONSERVATION_GAP",
+                    "priced_candidate_count": 354, "raw_dom_items": 526, "remaining_closed": 0}]
+        labels = core.failed_tab_labels(reports)
+        self.assertEqual(labels, ["Strzelcy:LEDGER_CONSERVATION_GAP(PRICED=354,RAW=526,CLOSED=0)"])
+        text = core.llm_packet("A - B", "Liga", "20:45", [], {"PARSER_TRUTH_STATUS": "FAIL", "ANALYSIS_READY": "NO"},
+                               [], "", "", labels)
+        self.assertIn("DATA_STATUS=FAIL FAILED_TABS=Strzelcy:LEDGER_CONSERVATION_GAP(PRICED=354,RAW=526,CLOSED=0)", text)
+
+    def test_passing_package_has_no_status_line(self):
+        text = core.llm_packet("A - B", "Liga", "20:45", [], {"PARSER_TRUTH_STATUS": "PASS", "ANALYSIS_READY": "YES"},
+                               [], "", "", [])
+        self.assertNotIn("DATA_STATUS", text)
+
+
 if __name__ == "__main__":
     unittest.main()

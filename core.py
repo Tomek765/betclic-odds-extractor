@@ -55,10 +55,10 @@ from parser import (
     _known_not_modeled_settlement,
 )
 
-BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20261025_FAST14"
+BUILD_ID = "APEX_CONTEXT_ENGINE_FIXED_20261025_FAST15"
 # Monotonic release order (UTC yyyymmddHHMM).  version_guard and the
 # installer compare it with BUILD_INFO.txt BUILD_SEQ / BUILT_AT of older builds.
-BUILD_SEQ = 202610252330
+BUILD_SEQ = 202610252359
 ACCOUNTING_SCHEMA_VERSION = "2.0"
 SEMANTIC_QUARANTINE_SCHEMA_VERSION = "2.0"
 DEFAULT_TAB_MAX_SECONDS = 60.0
@@ -836,9 +836,17 @@ def partition_semantic_records(rows: list[dict[str, Any]]) -> tuple[list[dict[st
     return accepted, quarantined
 
 
+def failed_tab_labels(tab_reports: list[dict[str, Any]]) -> list[str]:
+    """"Tab:REASON(PRICED=n,RAW=n)" for every tab that did not pass."""
+    return [f'{tr["tab_name"]}:{tr["reason"]}(PRICED={tr.get("priced_candidate_count", 0)},'
+            f'RAW={tr.get("raw_dom_items", 0)},CLOSED={tr.get("remaining_closed", 0)})'
+            for tr in tab_reports if tr.get("status") != "PASS"]
+
+
 def llm_packet(match: str, competition: str, kickoff: str, accepted_odds: list[dict[str, Any]],
                readiness: dict[str, Any], empty_tabs: list[str] | None = None,
-               kickoff_utc: str = "", captured_utc: str = "") -> str:
+               kickoff_utc: str = "", captured_utc: str = "",
+               failed_tabs: list[str] | None = None) -> str:
     """User/LLM odds text: every semantically accepted bet, no technical metadata."""
     complete = (readiness.get("PARSER_TRUTH_STATUS") == "PASS"
                 and readiness.get("ANALYSIS_READY") == "YES")
@@ -846,6 +854,9 @@ def llm_packet(match: str, competition: str, kickoff: str, accepted_odds: list[d
     if status and empty_tabs:
         # Tell the reader which Betclic tab delivered no offers at all.
         status += " EMPTY_TABS=" + ",".join(empty_tabs)
+    if status and failed_tabs:
+        # Name the failing tab and its reason: the GUI keeps no other copy.
+        status += " FAILED_TABS=" + ",".join(failed_tabs)
     return render_llm_odds({"MATCH": match, "COMPETITION": competition, "KICKOFF": kickoff,
                             "KICKOFF_UTC": kickoff_utc, "CAPTURED_UTC": captured_utc},
                            accepted_odds, status)
@@ -2963,10 +2974,11 @@ class BetclicOddsExtractor:
             "[TAB_TRUTH]",
         ])
 
+        tab_truth_lines: list[str] = []
         for tr in tab_reports:
             deadline_str = "YES" if tr["deadline_hit"] else "NO"
             sec_val = tr.get("tab_seconds", 0.0)
-            packet_lines.append(
+            tab_truth_lines.append(
             f'TAB={tr["tab_name"]}|STATUS={tr["status"]}|INTERACTIVE={tr.get("interactive_control_count", 0)}|'
             f'PRICED={tr.get("priced_candidate_count", 0)}|UNPRICED={tr.get("unpriced_control_count", 0)}|'
             f'RAW={tr["raw_dom_items"]}|PARSED={tr["parsed_odds_count"]}|UNRESOLVED={tr["unresolved_count"]}|'
@@ -2974,6 +2986,9 @@ class BetclicOddsExtractor:
                 f'CLOSED={tr["remaining_closed"]}|MORE={tr["remaining_more"]}|DEADLINE={deadline_str}|'
                 f'SECONDS={sec_val:.1f}|REASON={tr["reason"]}'
             )
+        packet_lines.extend(tab_truth_lines)
+        for line in tab_truth_lines:
+            self.diag.log("TAB_TRUTH " + line)
 
         packet_lines.extend([
             "",
@@ -3113,7 +3128,7 @@ class BetclicOddsExtractor:
                        if route_event_id and embedded_provider_info.get("provider_match_id") == route_event_id
                        else None) or ""
         llm_packet_text = llm_packet(match_str, comp_str, kickoff_str, export_odds, readiness, empty_main_tabs,
-                                     kickoff_utc, capture_started_at or "")
+                                     kickoff_utc, capture_started_at or "", failed_tab_labels(tab_reports))
         elapsed = round(time.time() - run_start_time, 2)
         self.diag.log(f"Extraction done in {elapsed}s: truth_status={global_truth_status}, ready={analysis_ready}, tabs={scanned_tabs}, markets={market_count}, odds={odds_count}, unresolved={unresolved_count}")
 
@@ -3142,6 +3157,7 @@ class BetclicOddsExtractor:
                 "PERIOD_RESOLUTION": period_resolution,
                 "DERIVED_NORMALIZATION": derived_normalization,
                 "COVERAGE_MANIFEST": coverage_manifests,
+                "TAB_TRUTH": tab_truth_lines,
             }
             info_path = LOGS_DIR.parent / "runtime_build_info.json"
             info_path.write_text(json.dumps(build_info, ensure_ascii=False, indent=2), encoding="utf-8")
